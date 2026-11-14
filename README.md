@@ -28,7 +28,7 @@ An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs
 | **Verification bench** | nets with wired-AND and contention checks, device models (UART, SPI, I²C master/slave), independent decoders, async device clocks, timing checks, a Python backend and a cocotb/RTL backend with proven parity | [bench.md](docs/bench.md) |
 | **Trace** | every instruction, stall, FIFO transfer and device event, with exact time | [debugging.md §1](docs/debugging.md#1-trace-events) |
 | **Waveforms** | VCD of the bus nets plus every register and unit signal, grouped per core and unit, with a generated GTKWave layout | [debugging.md §2](docs/debugging.md#2-waveforms-vcd) |
-| **Step debugger** | `pioscope debug` (GDB-style) and a **VS Code debugger** (`tools/vscode-pioscope`): breakpoints, step by instruction or by clock cycle, watchpoints, event catchpoints, disassembly, editable registers, the waveform rewritten at every stop | [debugging.md §3–5](docs/debugging.md#3-the-terminal-debugger-name-debug) |
+| **Step debugger** | `pioscope debug` (GDB-style) and a **VS Code debugger** (`pioscope/vscode`): breakpoints, step by instruction or by clock cycle, watchpoints, event catchpoints, disassembly, editable registers, the waveform rewritten at every stop | [debugging.md §3–5](docs/debugging.md#3-the-terminal-debugger-name-debug) |
 | **The tools follow the model** | add a core, a unit or a shared unit to a model and it appears in the debugger, the trace and the VCD with no tool changes | [ADR-0010](docs/open_items/0010-cores-and-observability.md) |
 | **Architecture study** | PIO-style vs a software-allocated mesh: smallest configuration per family, area (IHP SG13G2 cells and SRAM macros), utilisation, sensitivity, an interactive page | [arch-guide.md](docs/arch-guide.md), [pio/arch-study.html](docs/pio/arch-study.html) |
 
@@ -45,7 +45,7 @@ uv run pioscope debug pioscope/packs/pio/programs/uart_rx.pio --device uart_part
 gtkwave build/rx.vcd &
 ```
 
-VS Code: build and install the extension once (`uv run python tools/vscode-pioscope/build.py && code --install-extension tools/vscode-pioscope/pioscope-asm-0.1.0.vsix`), reload the window, open a `.pio` file and press F5. See [debugging.md §0](docs/debugging.md#0-setup-once).
+VS Code: build and install the extension once (`uv run pioscope vscode && code --install-extension build/pioscope-asm-0.1.0.vsix`), reload the window, open a `.pio` file and press F5. See [debugging.md §0](docs/debugging.md#0-setup-once).
 
 **Start here:** [docs/README.md](docs/README.md) (the documentation map), then [tutorials 01–04](docs/tutorials/).
 

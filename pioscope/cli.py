@@ -268,6 +268,12 @@ def _dap(argv: Sequence[str]) -> int:
     return dap_main(list(argv))
 
 
+def _vscode(argv: Sequence[str]) -> int:
+    from pioscope.vscode.build import main as vscode_main
+
+    return vscode_main(list(argv))
+
+
 def _arch(argv: Sequence[str]) -> int:
     from pioscope.arch.report import main as arch_main
 
@@ -281,7 +287,8 @@ COMMANDS: dict[str, tuple[Callable[[Sequence[str]], int], str]] = {
     "metrics": (_metrics, "per-program static ISA metrics"),
     "isa-docs": (_isa_docs, "regenerate the active pack's isa.md + isa-encoding.adoc/.html"),
     "debug": (_debug, "step through a program on its ISA pack's engine model, GDB style"),
-    "dap": (_dap, "Debug Adapter Protocol server for VS Code (tools/vscode-pioscope)"),
+    "dap": (_dap, "Debug Adapter Protocol server for VS Code (the `vscode` extension)"),
+    "vscode": (_vscode, "build the VS Code extension (.vsix) for the installed ISA packs"),
     "arch": (_arch, "architecture study: PIO-style vs mesh, area and utilisation"),
 }
 
