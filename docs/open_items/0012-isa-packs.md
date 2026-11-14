@@ -42,7 +42,7 @@ That made it impossible to:
 - The arch study's unit list comes from the pack's `cost.yaml`, so a pack with no units is valid.
 
 ## Consequences (packaging, 2026-11-14)
-PIOScope is an installable library. Downstream projects (Kraken, a new ISA, a tapeout) depend on it instead of copying it.
+PIOScope is an installable library. Downstream projects (another ISA, a tapeout) depend on it instead of copying it.
 - **Entry points.** `packs()` returns the built-in sub-packages plus every `pioscope.packs` entry point, so a pack in another package is found once it is installed. Two packs with one name is an error.
 - **Package-relative data.** A pack's spec, programs and arch data sit next to its module (`HERE = pack_dir(__file__)`), so the pack works from a wheel as well as from a checkout. The PIO pack's data is in `pioscope/packs/pio/`; there is no `spec/` directory.
 - **Docs under the working directory.** `IsaPack.docs` defaults to `docs/<name>` under the cwd: generated documents belong to the project being worked on, not to the installed library. Messages and documents show paths with `display_path()`.
