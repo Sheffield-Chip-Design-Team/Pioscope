@@ -12,8 +12,8 @@ Syntax highlighting for the ISA packs' assembly (`.pio` for RP2040 PIO, and ever
 Install (from the project directory, in the VS Code terminal):
 
 ```bash
-uv run python tools/vscode-pioscope/build.py
-code --install-extension tools/vscode-pioscope/pioscope-asm-0.1.0.vsix
+uv run pioscope vscode
+code --install-extension build/pioscope-asm-0.1.0.vsix
 ```
 
 Then run "Developer: Reload Window". See `docs/debugging.md` for the full guide.

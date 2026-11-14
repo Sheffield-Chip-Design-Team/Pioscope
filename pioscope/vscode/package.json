@@ -14,7 +14,7 @@
       {
         "id": "pioscope-asm",
         "aliases": ["PIOScope assembly", "pioscope-asm"],
-        "extensions": [".pio"],
+        "extensions": [],
         "configuration": "./language-configuration.json"
       }
     ],
