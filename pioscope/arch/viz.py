@@ -10,6 +10,7 @@ One file, no external resources, light and dark themes. The page template
 
 from __future__ import annotations
 
+import html
 import json
 from pathlib import Path
 from typing import Any
@@ -30,4 +31,6 @@ def render(data: dict[str, Any]) -> str:
     page = TEMPLATE.read_text()
     if page.count("__DATA__") != 1:
         raise ValueError(f"{TEMPLATE.name} must contain exactly one __DATA__ placeholder")
-    return page.replace("__DATA__", blob)
+    from pioscope.packs import active
+
+    return page.replace("__TITLE__", html.escape(active().title)).replace("__DATA__", blob)
