@@ -1,5 +1,5 @@
 {
-  // Engine debugger (tools/vscode-pioscope, docs/debugging.md).
+  // Engine debugger (pioscope/vscode, docs/debugging.md).
   // Step Over = one instruction, Step Into = one sysclk cycle, Step Out = finish it.
   "version": "0.2.0",
   "configurations": [
