@@ -3,7 +3,7 @@
 This is the environment around an engine: an assembler, a board of nets, device models, independent decoders, protocol scenarios, and two interchangeable backends. The DUT slot holds an ISA pack's engine model (the PIO model, for the examples here), a stand-in stub, or RTL through cocotb.
 
 ```
- sim/packs/<pack>/programs/* ──pioscope asm──▶ ProgramImage (IR + words + config)
+ pioscope/packs/<pack>/programs/* ──pioscope asm──▶ ProgramImage (IR + words + config)
                                    │ Loader (PyImageLoader | MemFileLoader → +PROG/+CFG)
                                    ▼
             ┌────────────── DUT slot (TT pins: ui / uo / uio+oe) ──────────────┐
@@ -15,7 +15,7 @@ This is the environment around an engine: an assembler, a board of nets, device 
                                             │
                                      Waveform + device logs ─▶ Result
                                             │
-                          decoders (sim.decoders, independent) + checks (sim.checks)
+                          decoders (pioscope.decoders, independent) + checks (pioscope.checks)
 ```
 
 ## Commands
@@ -27,17 +27,16 @@ uv run pytest --backend=rtl               # same scenarios through cocotb + Icar
 uv run pytest --backend=rtl --sim=verilator
 uv run pytest --backend=rtl --waves       # also dump sim_build/pioscope_<sim>/runs/<scenario>/tb.fst
 uv run pytest --update-golden             # accept listing / error-message changes
-cd test && uv run make -B                 # TT flow: template test + bench parity test
 
-uv run pioscope asm sim/packs/pio/programs/uart_tx.pio -o build/uart_tx.json --listing build/uart_tx.lst --hex build/mem
+uv run pioscope asm pioscope/packs/pio/programs/uart_tx.pio -o build/uart_tx.json --listing build/uart_tx.lst --hex build/mem
 uv run pioscope sim build/uart_tx.json --dut engine --device uart_partner --baud 115200 --host-tx 0x41,0x42 --vcd build/out.vcd
-uv run pioscope rtl --scenario sim.bench.parity:parity_scenario --sim icarus
-uv run pioscope --isa pio metrics               # static per-program metrics (sim/scripts/metrics.py)
+uv run pioscope rtl --scenario pioscope.bench.parity:parity_scenario --sim icarus
+uv run pioscope --isa pio metrics               # static per-program metrics (pioscope/scripts/metrics.py)
 uv run pioscope --isa pio isa-docs              # regenerate docs/pio/isa.md + isa-encoding.adoc/.html
 uv run pioscope --isa pio arch --write          # regenerate docs/pio/arch-study.md + .html (ADR-0007)
-uv run pioscope sim sim/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner --baud 115200 --uart-send 0x55 --trace
-uv run pioscope debug sim/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 --uart-send 0x55   # docs/debugging.md
-uv run pytest sim/packs/pio/tests/test_scenarios.py   # PIO programs on the PIO model
+uv run pioscope sim pioscope/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner --baud 115200 --uart-send 0x55 --trace
+uv run pioscope debug pioscope/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 --uart-send 0x55   # docs/debugging.md
+uv run pytest pioscope/packs/pio/tests/test_scenarios.py   # PIO programs on the PIO model
 ```
 
 Scenarios that need an engine (`requires_engine`, the default) run on the engine model of their program's ISA pack (`--dut auto`, the default). With an explicit stand-in (`--dut stub`), or RTL not flagged `--rtl-engine`, they **skip** with the reason "no engine". The other tests cover:
@@ -58,20 +57,20 @@ Every device transaction and every host FIFO push or pop is logged with its cycl
 ```
 
 ```sh
-uv run pioscope sim --scenario sim.tests.devices.loopbacks:i2c_link --log-limit 0     # whole timeline
-uv run pioscope sim --scenario sim.tests.devices.loopbacks:i2c_link --source m        # one device (or 'host')
-uv run pioscope sim --scenario sim.tests.devices.loopbacks:i2c_link --trace           # live, as it runs
+uv run pioscope sim --scenario pioscope.tests.devices.loopbacks:i2c_link --log-limit 0     # whole timeline
+uv run pioscope sim --scenario pioscope.tests.devices.loopbacks:i2c_link --source m        # one device (or 'host')
+uv run pioscope sim --scenario pioscope.tests.devices.loopbacks:i2c_link --trace           # live, as it runs
 uv run pioscope sim ... --log build/run.log                                       # full log to a file
-uv run pioscope rtl --scenario sim.tests.devices.loopbacks:spi_link --trace           # live, in the cocotb log
+uv run pioscope rtl --scenario pioscope.tests.devices.loopbacks:spi_link --trace           # live, in the cocotb log
 ```
 
 - Bench time starts at reset release. cocotb's own simulator-time prefix also counts the reset cycles.
 - When a test using the `bench` fixture fails, pytest appends a "bench timeline" section to the failure report.
-- From Python, use `sim.bench.report.render_log(result)`, `timeline(result)`, or `run_python(sc, dut, on_event=callback)`.
+- From Python, use `pioscope.bench.report.render_log(result)`, `timeline(result)`, or `run_python(sc, dut, on_event=callback)`.
 
 ## Dropping in a DUT
 
-**Python engine model.** Subclass `sim.dut.core.Engine` (the observability contract comes with it; [reference/simulator.md](reference/simulator.md)), or implement the `sim.dut.base.Dut` protocol directly:
+**Python engine model.** Subclass `pioscope.dut.core.Engine` (the observability contract comes with it; [reference/simulator.md](reference/simulator.md)), or implement the `pioscope.dut.base.Dut` protocol directly:
 - `load(image)`
 - `reset() -> PadOut`
 - `step(PadIn) -> PadOut` (one rising edge)
@@ -87,7 +86,7 @@ uv run pioscope sim build/uart_tx.json --dut mypkg.model:Engine --device uart_pa
 
 Before trusting results, pass the parity test with your DUT (see ADR-0001).
 
-**RTL.** Put sources in `src/` and keep the TT top-level ports. Then:
+**RTL.** Keep the Tiny Tapeout top-level ports (`tt_um_*`: `ui_in`, `uo_out`, `uio_*`, `clk`, `rst_n`, `ena`); the packaged harness `pioscope/bench/rtl/tb.v` instantiates it. For a whole Tiny Tapeout project (GDS, FPGA and docs actions, the TT cocotb flow), start from the `pioscope-tt-template` repository. Then:
 
 ```sh
 uv run pytest --backend=rtl --rtl-src src/engine.v --rtl-src src/top.v --rtl-engine
@@ -97,7 +96,7 @@ To make the backdoor loader populate the RTL instruction memory, define `PIOSCOP
 
 ## Writing a scenario
 
-A scenario is a **module-level** function returning `sim.bench.Scenario`. It must be module-level so the cocotb process can rebuild it by import path. Pass parameters with `functools.partial(factory, key=value)`.
+A scenario is a **module-level** function returning `pioscope.bench.Scenario`. It must be module-level so the cocotb process can rebuild it by import path. Pass parameters with `functools.partial(factory, key=value)`.
 
 ```python
 def uart_tx(prog="uart_tx", payload=(0x55,)):
@@ -129,10 +128,10 @@ Scenario(..., sample_aperture_s=0.5e-9, seed=1)   # setup window at the DUT inpu
 - Edges keep their exact time. The VCD shows them between the 20 ns ticks.
 - With a window set, `dut:<net>` shows what the DUT actually sampled: the same edge, or one cycle later when it fell inside the window. Which of the two happens is seeded, so runs are reproducible.
 - `r.stats` counts `metastable_windows`, `late_samples` and `subcycle_pulses_lost`. A lost pulse means a device clock faster than sysclk/2 squeezed two changes into one cycle.
-- Sweep `offset_s` over one sysclk period (`k * 20e-9 / 8`) to cover all arrival phases. `sim/packs/pio/tests/test_scenarios.py::test_uart_rx_8n1_with_baud_error` sweeps baud error; add `offset_s` to sweep phase.
+- Sweep `offset_s` over one sysclk period (`k * 20e-9 / 8`) to cover all arrival phases. `pioscope/packs/pio/tests/test_scenarios.py::test_uart_rx_8n1_with_baud_error` sweeps baud error; add `offset_s` to sweep phase.
 
 ```sh
-uv run pioscope sim --scenario sim.bench.parity:parity_async_scenario --dut tt_template --vcd build/async.vcd
+uv run pioscope sim --scenario pioscope.bench.parity:parity_async_scenario --dut tt_template --vcd build/async.vcd
 gtkwave build/async.vcd      # compare u_tx with dut_u_tx
 ```
 
@@ -146,7 +145,7 @@ In custom scripts, `yield At(t)` resumes at absolute time `t` in seconds. Drives
 
 ## Writing a device
 
-Subclass `sim.devices.Device`, declare `ports`, and implement `tick()`. Use `self.read(port)` and `self.drive(port, 0|1|Z)`. Bus masters are easier as a `ScriptedDevice` generator: `yield n` waits n cycles, and `yield lambda: cond` waits until the condition holds.
+Subclass `pioscope.devices.Device`, declare `ports`, and implement `tick()`. Use `self.read(port)` and `self.drive(port, 0|1|Z)`. Bus masters are easier as a `ScriptedDevice` generator: `yield n` waits n cycles, and `yield lambda: cond` waits until the condition holds.
 
 Device rules:
 - Derive time from `self.cycle / self.sysclk_hz`.
@@ -154,4 +153,4 @@ Device rules:
 - Log with `self.emit(kind, **data)`.
 - Never use cocotb triggers.
 
-Decoders must import only `sim.wave`, and a test enforces this.
+Decoders must import only `pioscope.wave`, and a test enforces this.

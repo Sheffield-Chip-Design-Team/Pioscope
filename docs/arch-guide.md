@@ -2,9 +2,9 @@
 
 **Intended audience:** hardware engineers who want to read, question or extend the architecture study.
 
-**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`spec/arch/pio/`) as of 2026-11-14.
+**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`pioscope/packs/pio/arch/`) as of 2026-11-14.
 
-Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `sim/arch/`.
+Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `pioscope/arch/`.
 
 ---
 
@@ -76,7 +76,7 @@ Everything below applies to both cases.
 
 ## 3. Architecture families
 
-The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `sim/arch/arch.py` and `minimal()` in `sim/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
+The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `pioscope/arch/arch.py` and `minimal()` in `pioscope/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
 
 ### 3.1 PIO-style: `pio_full` and `pio_lean`
 
@@ -140,7 +140,7 @@ The study compares five **families**. Each is sized to the smallest configuratio
 
 ## 4. Allocation: the "higher-level software"
 
-Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `sim/arch/allocate.py`.
+Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `pioscope/arch/allocate.py`.
 
 - **PIO** (`allocate_pio`): program *i* goes on core *i*. It fails if there are more programs than cores, or if a program needs a unit, more imem words or a deeper FIFO than a core has. With shared imem, it also fails when the programs together need more words than the memory has.
 - **Mesh** (`allocate_mesh`): each program's demand must fit inside one cluster's remaining capacity: 1 core, ⌈words / bank_words⌉ banks, its FIFOs, and one of each unit it uses. This is a small **bin-packing** problem. There are two allocators:
@@ -171,7 +171,7 @@ Allocation happens **at load time**, before the programs run, and stays fixed wh
 | flop bit | One `sg13g2_dfrbp_1` flip-flop = 52.6176 µm² = **7.25 GE** | PDK LEF (sourced) |
 | mux bit | One bit of a 2:1 mux, `sg13g2_mux2_1` = 18.144 µm² = **2.5 GE**. An N:1 mux costs N−1 of them per bit. | PDK LEF (sourced) |
 | **µm²** | Physical area. SRAM macros are given in µm² and converted to GE by ÷ 7.2576. | IHP SRAM datasheets (sourced) |
-| **tile** | One Tiny Tapeout tile, about 202 × 155 µm = 31,310 µm² ≈ **4,314 GE**. The report counts tiles **at 100% density**; real placement and routing need noticeably more. A 64-word macro (236.8 µm wide) is wider than one tile. | `info.yaml` comment |
+| **tile** | One Tiny Tapeout tile, about 202 × 155 µm = 31,310 µm² ≈ **4,314 GE**. The report counts tiles **at 100% density**; real placement and routing need noticeably more. A 64-word macro (236.8 µm wide) is wider than one tile. | Tiny Tapeout tile size |
 | **word** | One instruction (`word_bits`) or one FIFO entry (`fifo_bits`) | the pack's ISA yaml |
 | **load** | The fraction of time a protocol's line is busy (0–1). It is an input, set per program in each workload. | `workloads.yaml` (assumed) |
 | **bit share** | For one pass of a program, the share of bit-times during which a unit is busy. | the pack's `bit_shares` hook (static estimate) |
@@ -185,7 +185,7 @@ Two kinds of number appear throughout:
 
 ## 6. The area model
 
-The code is `area()` in `sim/arch/cost.py`. Notation:
+The code is `area()` in `pioscope/arch/cost.py`. Notation:
 - W = words;
 - b = bits per instruction word (`word_bits`), d = bits per FIFO entry (`fifo_bits`);
 - f = flop bit (7.25 GE), m = mux bit (2.5 GE);
@@ -324,9 +324,9 @@ The **hand-picked architectures** (`architectures.yaml`) are fixed configuration
 
 | To change… | Edit | Then |
 |---|---|---|
-| protocol mixes or loads | `spec/arch/<pack>/workloads.yaml` (`prog` = a program of the pack) | `uv run pioscope --isa <pack> arch --write` |
-| hand-picked architectures | `spec/arch/<pack>/architectures.yaml` (`family: pio` or `mesh`; `imem: flops` or `sram`) | same |
-| area constants, unit prices or the SRAM catalogue | `spec/arch/<pack>/cost.yaml` | same |
+| protocol mixes or loads | `<pack>/arch/workloads.yaml` (`prog` = a program of the pack) | `uv run pioscope --isa <pack> arch --write` |
+| hand-picked architectures | `<pack>/arch/architectures.yaml` (`family: pio` or `mesh`; `imem: flops` or `sram`) | same |
+| area constants, unit prices or the SRAM catalogue | `<pack>/arch/cost.yaml` | same |
 | a program's demand | the program itself (demand is derived from the assembled image), or the pack's `demand` hooks | same |
 
 `uv run pytest` fails if a pack's `arch-study.md` or `arch-study.html` is stale. Commit the regenerated files with the input change.

@@ -1,24 +1,24 @@
 # ISA flow reference: from a pack's yaml to a running instruction
 
-**Audience:** engineers who need to read, question or change an ISA, add a new one (an ISA pack), or develop in parallel with others who do. Read [simulator.md](simulator.md) §5 for how instructions execute. The examples use the RP2040 PIO pack (`spec/isa/pio.yaml`).
+**Audience:** engineers who need to read, question or change an ISA, add a new one (an ISA pack), or develop in parallel with others who do. Read [simulator.md](simulator.md) §5 for how instructions execute. The examples use the RP2040 PIO pack (`pioscope/packs/pio/isa.yaml`).
 
-**The rule:** each pack's `spec/isa/<pack>.yaml` is the single source of truth for its ISA (CLAUDE.md §8 #1, ADR-0012). The assembler, the encoder, the docs and the model's set of handlers all derive from it, and tests fail if they drift apart.
+**The rule:** each pack's `<pack>/isa.yaml` is the single source of truth for its ISA (CLAUDE.md §8 #1, ADR-0012). The assembler, the encoder, the docs and the model's set of handlers all derive from it, and tests fail if they drift apart.
 
 ```
-spec/isa/<pack>.yaml
-   │ sim/isa/load.py (validate) → sim/isa/spec.py (frozen dataclasses: Isa, InstrSpec, ...)
+<pack>/isa.yaml
+   │ pioscope/isa/load.py (validate) → pioscope/isa/spec.py (frozen dataclasses: Isa, InstrSpec, ...)
    ▼
-sim/asm/lexer.py      line → Statement(label, mnemonic|.directive, items, side, delay)
-sim/asm/operands.py   items typed against operand_types and bound to operand slots
-sim/asm/directives.py the generic directive handlers, plus the pack's (hooks: directives)
-sim/asm/assembler.py  pass 1: directives, labels, binding; pass 2: labels, config refs
-sim/asm/encode.py     IR → words: the generic field encoder, or the pack's (hooks: encoder)
-sim/asm/listing.py    human-readable listing
+pioscope/asm/lexer.py      line → Statement(label, mnemonic|.directive, items, side, delay)
+pioscope/asm/operands.py   items typed against operand_types and bound to operand slots
+pioscope/asm/directives.py the generic directive handlers, plus the pack's (hooks: directives)
+pioscope/asm/assembler.py  pass 1: directives, labels, binding; pass 2: labels, config refs
+pioscope/asm/encode.py     IR → words: the generic field encoder, or the pack's (hooks: encoder)
+pioscope/asm/listing.py    human-readable listing
    ▼
-sim/image.py          ProgramImage: IR (authoritative) + words + config + symbols + pack
+pioscope/image.py          ProgramImage: IR (authoritative) + words + config + symbols + pack
    ▼
 the pack's model      HANDLERS[name](core, IrInstr, first) → completes or stalls
-sim/scripts/gen_isa_*.py docs/<pack>/isa.md, isa-encoding.adoc, isa-encoding.html
+pioscope/scripts/gen_isa_*.py docs/<pack>/isa.md, isa-encoding.adoc, isa-encoding.html
 ```
 
 ---
@@ -82,22 +82,22 @@ Operand keys:
 
 ## 2. The pipeline in detail
 
-1. **Load** (`sim/isa/load.py`). Parses and validates the YAML: duplicate names, unknown types, widths that overflow their field, regexes that don't compile, unknown hooks. Errors are `IsaSpecError`. `load_isa(path)` is cached per file. `default_isa()` is the active pack's.
-2. **Lex** (`sim/asm/lexer.py`). One line becomes one `Statement`: `[label:] [mnemonic|.directive] items [side X] [[delay]] ; comment`. Items stay raw text (`x--`, `~osr`, `(N - 1)`), so the lexer knows no instruction.
-3. **Bind** (`sim/asm/operands.py`). Items are matched to the instruction's operand specs by type and keyword, then converted (ints, expressions after `.define` expansion, enums, patterns). Nothing names an instruction.
-4. **Directives** (`sim/asm/directives.py`). The `GENERIC` handlers (`.program`, `.pins`, `.side_set`, `.fifo`, `.clkdiv`, `.wrap_target`, `.wrap`, `.define`) plus the pack's `DIRECTIVE_HANDLERS` write `ctx.config`. A pack may also define `resolve_config(ctx, stmts)`, run after pass 1 (PIO resolves `.sm_config` pin names there).
-5. **Assemble** (`sim/asm/assembler.py`):
+1. **Load** (`pioscope/isa/load.py`). Parses and validates the YAML: duplicate names, unknown types, widths that overflow their field, regexes that don't compile, unknown hooks. Errors are `IsaSpecError`. `load_isa(path)` is cached per file. `default_isa()` is the active pack's.
+2. **Lex** (`pioscope/asm/lexer.py`). One line becomes one `Statement`: `[label:] [mnemonic|.directive] items [side X] [[delay]] ; comment`. Items stay raw text (`x--`, `~osr`, `(N - 1)`), so the lexer knows no instruction.
+3. **Bind** (`pioscope/asm/operands.py`). Items are matched to the instruction's operand specs by type and keyword, then converted (ints, expressions after `.define` expansion, enums, patterns). Nothing names an instruction.
+4. **Directives** (`pioscope/asm/directives.py`). The `GENERIC` handlers (`.program`, `.pins`, `.side_set`, `.fifo`, `.clkdiv`, `.wrap_target`, `.wrap`, `.define`) plus the pack's `DIRECTIVE_HANDLERS` write `ctx.config`. A pack may also define `resolve_config(ctx, stmts)`, run after pass 1 (PIO resolves `.sm_config` pin names there).
+5. **Assemble** (`pioscope/asm/assembler.py`):
    - pass 1: directives, labels, operand binding;
    - pass 2: labels and config references.
 
    Errors are collected (`AsmErrors`). Each has a span (file, line, column), *expected* and a *hint* (agreement #7).
-6. **Encode**: `encoder_for(isa)` is the pack's `hooks: encoder:` module, or the generic field encoder (`sim/asm/encode.py`), which packs each operand MSB-first into its field. An encoder provides:
+6. **Encode**: `encoder_for(isa)` is the pack's `hooks: encoder:` module, or the generic field encoder (`pioscope/asm/encode.py`), which packs each operand MSB-first into its field. An encoder provides:
    - `encode_image` and `decode_word`;
    - optionally `delay_max(isa, config)`, the largest `[delay]` (PIO: it shrinks as side-set takes bits);
    - `instr_layout`, `field_usage` and `side_layout`, for the generated encoding documents.
 
    With `strict: false`, an instruction that doesn't fit gets `None` as its word plus a warning.
-7. **Image** (`sim/image.py`). `ProgramImage` holds `instructions` (IR, authoritative), `words`, `config`, `symbols`, `source`, `warnings`, `isa_pack` and `word_bits`, and round-trips to JSON.
+7. **Image** (`pioscope/image.py`). `ProgramImage` holds `instructions` (IR, authoritative), `words`, `config`, `symbols`, `source`, `warnings`, `isa_pack` and `word_bits`, and round-trips to JSON.
 8. **Execute**: the pack's model has one `@handler("name")` per instruction, and the pack's tests check that the set matches the yaml.
 9. **Docs** (`pioscope --isa <pack> isa-docs`). Regenerates `docs/<pack>/isa.md`, `isa-encoding.adoc` and `isa-encoding.html`. Each pack's tests fail when any of them is stale.
 
@@ -107,7 +107,7 @@ Operand keys:
 
 | If you change… | These tests react | Fix by |
 |---|---|---|
-| any of `pio.yaml` | `sim/packs/pio/tests/test_isa.py` (loads, handlers, stale docs) | `uv run pioscope --isa pio isa-docs` |
+| any of `pio.yaml` | `pioscope/packs/pio/tests/test_isa.py` (loads, handlers, stale docs) | `uv run pioscope --isa pio isa-docs` |
 | an instruction or its encoding | `test_encode.py` (pioasm output, datasheet forms, round trips) | the encoder, or the spec |
 | a mnemonic | `test_isa.py::test_every_instruction_is_used_by_a_program_or_test`, `test_exec.py::test_every_instruction_has_a_handler` | add a directed test and a handler |
 | a directive | `test_isa.py::test_every_directive_has_a_handler` | add the handler |
@@ -148,20 +148,32 @@ A pack that models an existing ISA (PIO) changes only to match that ISA more clo
 
 ## 5. Adding an ISA pack
 
-1. **Spec:** `spec/isa/<name>.yaml` with `pack: <name>`. Start from `pio.yaml` for the structure.
-2. **Pack:** `sim/packs/<name>/__init__.py` defining
-   ```python
-   PACK = IsaPack(name="<name>", title="...", spec=ROOT / "spec/isa/<name>.yaml",
-                  programs=HERE / "programs", arch=ROOT / "spec/arch/<name>",
-                  docs=ROOT / "docs/<name>", model="sim.dut.<name>:MyEngine",
-                  demand="sim.packs.<name>.demand", ext=".<suffix>")
-   ```
-   Packs are discovered automatically. `rank` decides the default when no `--isa` or `$PIOSCOPE_ISA` is given.
-3. **Hooks**, only if yaml can't say it: directive handlers (`registry()` from `sim.asm.directives`) and an encoder module (§2 step 6). See `sim/packs/pio/directives.py` and `encode.py`.
-4. **Model:** subclass `sim.dut.core.Core` and `Engine` (`sim/dut/pio` is a complete example), with one handler per instruction from `sim.dut.core.registry()`.
-5. **Arch study:** `spec/arch/<name>/{cost,architectures,workloads}.yaml` and a `demand` module (`units_used`, `bit_shares`, `fifos`, `bit_rate`; `sim/packs/pio/demand.py` is the minimal one).
-6. **Tests:** `sim/packs/<name>/tests/` with a `conftest.py` that activates the pack (copy PIO's). Scenarios run on the model by default.
-7. Run `uv run python tools/vscode-pioscope/build.py`: the editor grammar picks up the new mnemonics and the new file suffix.
+A pack lives in **your own package**, not inside PIOScope, and is registered by an entry point. Start it with the scaffolder:
+
+```
+uv add pioscope            # or: git URL, or an editable path for co-development
+uv run pioscope new-pack myisa [--pioscope ../pioscope]
+cd myisa && uv sync && uv run pytest
+uv run pioscope --isa myisa isa-docs
+```
+
+`new-pack` writes a project at `./myisa/` with a three-instruction ISA (`set`, `jmp`, `nop`), the generic field encoder, a model, the arch-study data and a `blink.myisa` program:
+
+| File | What it is |
+|---|---|
+| `pyproject.toml` | depends on `pioscope`; `[project.entry-points."pioscope.packs"] myisa = "myisa_isa.pack:PACK"` |
+| `myisa_isa/pack.py` | `PACK = IsaPack(name=..., title=..., spec=HERE/"isa.yaml", programs=HERE/"programs", arch=HERE/"arch", model="myisa_isa.model:Engine", demand="myisa_isa.demand", ext=".myisa")`. `HERE = pack_dir(__file__)` keeps the data package-relative, so it works from a wheel |
+| `myisa_isa/isa.yaml` | the ISA: single source of truth (agreement #1). Grow it from here; `pioscope/packs/pio/isa.yaml` shows every feature |
+| `myisa_isa/model.py` | `Core` / `Engine` subclasses of `pioscope.dut.core`, one handler per instruction from `registry()`. `pioscope/dut/pio` is a complete example |
+| `myisa_isa/demand.py` | arch-study hooks (`units_used`, `bit_shares`, `fifos`, `bit_rate`) |
+| `myisa_isa/arch/*.yaml` | area costs, architectures, workloads. Edit the workloads to name your programs |
+| `tests/` | a test that every yaml instruction has a handler and the blink program runs; `conftest.py` activates the pack with `pioscope.packs.use` |
+
+Generated documents go to `docs/<name>` under the directory you run the tools from. `rank` on the `IsaPack` decides the default pack when several are installed and no `--isa` / `$PIOSCOPE_ISA` is given.
+
+After the skeleton works:
+- **Hooks**, only if the yaml can't say it: directive handlers (`registry()` from `pioscope.asm.directives`) and an encoder module (§2 step 6), named under `hooks:` in the yaml. See `pioscope/packs/pio/directives.py` and `encode.py`.
+- Run `uv run pioscope vscode`: the editor grammar picks up the new mnemonics and the new file suffix.
 
 ---
 
@@ -181,5 +193,5 @@ An ISA is shared by everyone who writes programs for it, so changes to it must b
   2. Run `pioscope isa-docs` and `pytest --update-golden`.
   3. Never hand-merge generated files (`docs/<pack>/isa*`, golden `.lst`); regenerate them.
 - **Numbers that must be unique:** opcodes (where the encoder needs it), finding numbers and `ADR-NNNN` numbers. Claim the next number in your first commit, so clashes show up early.
-- **Experiments without changing the ISA:** `sim.isa.load_isa(path)` loads any YAML, and `sim.asm.assemble(source, file, isa=...)` assembles against it. Copy a pack's yaml to a scratch file to try an idea before proposing it.
+- **Experiments without changing the ISA:** `pioscope.isa.load_isa(path)` loads any YAML, and `pioscope.asm.assemble(source, file, isa=...)` assembles against it. Copy a pack's yaml to a scratch file to try an idea before proposing it.
 

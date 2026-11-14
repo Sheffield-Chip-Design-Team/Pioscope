@@ -1,0 +1,44 @@
+# Area model for the PIO architecture study (docs/arch-guide.md, ADR-0007).
+#
+# Units: gate equivalents (GE; 1 GE = one sg13g2_nand2_1). Cell and macro areas
+# are from the IHP SG13G2 PDK (sources below). The block costs (core, units,
+# FIFO control, link width) are PLACEHOLDERS until synthesis results replace
+# them. The report re-ranks the architectures with each constant scaled x0.5 and
+# x2 (sensitivity table), so a conclusion that rests on one guessed number is visible.
+#
+# Standard cells, from sg13g2_stdcell.lef (SIZE lines, row height 3.78 um):
+#   sg13g2_nand2_1  1.92 x 3.78 =  7.2576 um^2 = 1 GE
+#   sg13g2_dfrbp_1 13.92 x 3.78 = 52.6176 um^2 = 7.25 GE
+#   sg13g2_mux2_1   4.80 x 3.78 = 18.144  um^2 = 2.5 GE
+
+flop_bit: 7.25       # one flip-flop storage bit (sg13g2_dfrbp_1): FIFOs always; imem when imem: flops
+mux2_bit: 2.5        # one bit of a 2:1 mux (sg13g2_mux2_1); an N:1 mux costs N-1 of these per bit
+core: 1800           # one state machine: PC, X, Y, OSR/ISR + shift counters, decode, clock divider
+fifo_control: 80     # per FIFO: read/write pointers, full/empty
+unit_port_bits: 8    # width of one core<->unit link (bit stream, strobes, flags)
+config_bit: 6        # one allocation-select bit in a mesh (a flop written at load time)
+units: {}            # a PIO state machine has no attached units
+
+# imem as SRAM macros (imem: sram). The cheapest set of macros that covers the
+# words, the 16-bit PIO word and the read ports is used (16-bit macros in pairs).
+# Every macro has a synchronous one-cycle read (registered address).
+# Areas: "Area (h x w)" lines of the datasheets in IHP-Open-PDK
+# ihp-sg13g2/libs.ref/sg13g2_sram/doc/<name>.txt. Only the 64- and 256-word
+# macros are listed: imem needs are far smaller than 512 words, and a bigger
+# macro is never cheaper for them. SG13CMOS5L availability is not stated in
+# the PDK docs; ttihp-cmos5l-sram-example uses RM_IHPSG13_1P_256x16_c2_bm_bist.
+nand2_um2: 7.2576    # sg13g2_nand2_1 area: converts macro um^2 to GE
+tile_um2: 31310      # one Tiny Tapeout tile, about 202 x 155 um (Tiny Tapeout tile size)
+sram:
+  # single-port
+  - {name: RM_IHPSG13_1P_64x16_c2,          words: 64,  bits: 16, ports: 1, um2: 15240.45}
+  - {name: RM_IHPSG13_1P_64x64_c2_bm_bist,  words: 64,  bits: 64, ports: 1, um2: 50489.13}
+  - {name: RM_IHPSG13_1P_256x8_c3_bm_bist,  words: 256, bits: 8,  ports: 1, um2: 17546.88}
+  - {name: RM_IHPSG13_1P_256x16_c2_bm_bist, words: 256, bits: 16, ports: 1, um2: 28127.10}
+  - {name: RM_IHPSG13_1P_256x32_c2_bm_bist, words: 256, bits: 32, ports: 1, um2: 49488.50}
+  # dual-port (ports A and B independent, no conflict handling)
+  - {name: RM_IHPSG13_2P_64x22_c2_bm_bist,  words: 64,  bits: 22, ports: 2, um2: 39383.87}
+  - {name: RM_IHPSG13_2P_64x32_c2,          words: 64,  bits: 32, ports: 2, um2: 52620.88}
+  - {name: RM_IHPSG13_2P_256x8_c2_bm_bist,  words: 256, bits: 8,  ports: 2, um2: 38147.51}
+  - {name: RM_IHPSG13_2P_256x16_c2_bm_bist, words: 256, bits: 16, ports: 2, um2: 57520.55}
+  - {name: RM_IHPSG13_2P_256x32_c2_bm_bist, words: 256, bits: 32, ports: 2, um2: 96266.63}

@@ -1,0 +1,44 @@
+# Protocol mixes for the PIO architecture study (docs/arch-guide.md).
+#
+# Each mix is a set of programs that run at the same time on one engine.
+# `prog` names a program of the pio pack (pioscope/packs/pio/programs, without .pio).
+# `load` is the fraction of time that protocol's line is busy (0..1): it sets the
+# activity estimate of its state machine. A program may appear more than once.
+#
+# The engine must support every mix, one mix at a time. Pads are assumed
+# remappable: only the total pad count is checked against the 24 Tiny Tapeout pads.
+
+workloads:
+  - name: uart_pair
+    description: one full-duplex UART
+    programs:
+      - {prog: uart_tx, load: 0.3}
+      - {prog: uart_rx, load: 0.3}
+
+  - name: io_hub
+    description: UART, SPI master and an I2C writer side by side
+    programs:
+      - {prog: uart_tx, load: 0.3}
+      - {prog: uart_rx, load: 0.3}
+      - {prog: spi_m0, load: 0.8}
+      - {prog: i2c_write, load: 0.1}
+
+  - name: dual_spi
+    description: two SPI masters in different modes
+    programs:
+      - {prog: spi_m0, load: 0.6}
+      - {prog: spi_m3, load: 0.6}
+
+  - name: led_controller
+    description: a WS2812 strip driven from a UART command link
+    programs:
+      - {prog: ws2812, load: 0.9}
+      - {prog: uart_rx, load: 0.2}
+
+  - name: quad_uart_tx
+    description: four UART transmitters
+    programs:
+      - {prog: uart_tx, load: 0.5}
+      - {prog: uart_tx, load: 0.5}
+      - {prog: uart_tx, load: 0.5}
+      - {prog: uart_tx, load: 0.5}

@@ -4,7 +4,7 @@
 
 ## 1. Read the program
 
-[`sim/examples/blink.pio`](../../sim/examples/blink.pio), an RP2040 PIO program (the `.pio` suffix picks the PIO pack):
+[`pioscope/examples/blink.pio`](../../sim/examples/blink.pio), an RP2040 PIO program (the `.pio` suffix picks the PIO pack):
 
 ```asm
 .program blink
@@ -25,7 +25,7 @@ Predict before you run: high for 8 × 25 = **200 sysclk cycles**, then low for 2
 ## 2. Assemble it
 
 ```bash
-uv run pioscope asm sim/examples/blink.pio -o build/blink.json --listing build/blink.lst
+uv run pioscope asm pioscope/examples/blink.pio -o build/blink.json --listing build/blink.lst
 cat build/blink.lst
 ```
 
@@ -34,7 +34,7 @@ The listing shows 2 instruction words, their 16-bit RP2040 encoding (`e701`, `e7
 ## 3. Run it with a trace and a waveform
 
 ```bash
-uv run pioscope sim --scenario sim.examples.pulse_counter:blink_scenario --dut engine \
+uv run pioscope sim --scenario pioscope.examples.pulse_counter:blink_scenario --dut engine \
     --trace --vcd build/blink.vcd
 ```
 
@@ -53,20 +53,20 @@ In the left tree, open `bench` and add `led`, then open `engine` → `sm0` and a
 ## 4. Step through it
 
 ```bash
-uv run pioscope debug --scenario sim.examples.pulse_counter:blink_scenario
-(kdb) info program          # the 2 instructions
-(kdb) step                  # one instruction (stops before the next issues)
-(kdb) info pins             # led=1
-(kdb) stepi 25              # 25 sysclk cycles = 1 SM cycle
-(kdb) info cores        # pc and the stall reason ("delay")
-(kdb) continue 1000
+uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario
+(pioscope) info program          # the 2 instructions
+(pioscope) step                  # one instruction (stops before the next issues)
+(pioscope) info pins             # led=1
+(pioscope) stepi 25              # 25 sysclk cycles = 1 SM cycle
+(pioscope) info cores        # pc and the stall reason ("delay")
+(pioscope) continue 1000
 ```
 
 In VS Code, open `blink.pio`, add this configuration to `.vscode/launch.json`, and press F5:
 
 ```json
 { "type": "pioscope", "request": "launch", "name": "Blink",
-  "scenario": "sim.examples.pulse_counter:blink_scenario",
+  "scenario": "pioscope.examples.pulse_counter:blink_scenario",
   "vcd": "${workspaceFolder}/build/debug.vcd", "stopOnEntry": true }
 ```
 

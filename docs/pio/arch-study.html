@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PIOScope architecture study</title>
+<title>RP2040 PIO architecture study</title>
 <style>
 :root {
   color-scheme: light;
@@ -122,12 +122,11 @@ td.cell button.sel { outline: 2px solid var(--ink); outline-offset: 1px; }
 </head>
 <body>
 <main>
-  <h1>PIOScope architecture study</h1>
+  <h1>RP2040 PIO architecture study</h1>
   <p class="sub">PIO-style cores vs a software-allocated mesh: area and utilisation
-  over the protocol mixes in <code>spec/arch/workloads.yaml</code>.
+  over the protocol mixes in <code>the pack's arch/workloads.yaml</code>.
   Tables: <a href="arch-study.md">arch-study.md</a> · terms and formulas:
-  <a href="arch-guide.md">arch-guide.md</a> · method and scope:
-  <a href="open_items/0007-architecture-study.md">ADR-0007</a>.</p>
+  <a href="../arch-guide.md">arch-guide.md</a> · method and scope: <a href="../open_items/0007-architecture-study.md">ADR-0007</a>.</p>
   <p class="status">Analytic estimates. Cell and SRAM areas come from the IHP PDK; block costs
   (core, units, FIFO control, links) are placeholders. Activity is estimated from each program's
   bit shares and an assumed traffic load. Allocation is static (load time).

@@ -1,5 +1,5 @@
 {
-  // Engine debugger (tools/vscode-pioscope, docs/debugging.md).
+  // Engine debugger (pioscope/vscode, docs/debugging.md).
   // Step Over = one instruction, Step Into = one sysclk cycle, Step Out = finish it.
   "version": "0.2.0",
   "configurations": [
@@ -19,7 +19,7 @@
       "type": "pioscope",
       "request": "launch",
       "name": "PIO: UART RX scenario",
-      "scenario": "sim.packs.pio.tests.scenarios:uart_rx",
+      "scenario": "pioscope.packs.pio.tests.scenarios:uart_rx",
       "vcd": "${workspaceFolder}/build/debug_rx.vcd",
       "stopOnEntry": true
     },
@@ -38,7 +38,7 @@
       "type": "pioscope",
       "request": "launch",
       "name": "PIO: SPI mode 0 scenario",
-      "scenario": "sim.packs.pio.tests.scenarios:spi_master",
+      "scenario": "pioscope.packs.pio.tests.scenarios:spi_master",
       "vcd": "${workspaceFolder}/build/debug_spi.vcd",
       "stopOnEntry": true
     },
@@ -46,8 +46,8 @@
       "type": "pioscope",
       "request": "launch",
       "name": "Blink with an edge-counting unit (tutorial 04)",
-      "scenario": "sim.examples.pulse_counter:blink_scenario",
-      "dut": "sim.examples.edge_counter:EdgeCountingEngine",
+      "scenario": "pioscope.examples.pulse_counter:blink_scenario",
+      "dut": "pioscope.examples.edge_counter:EdgeCountingEngine",
       "vcd": "${workspaceFolder}/build/debug.vcd",
       "stopOnEntry": true
     }

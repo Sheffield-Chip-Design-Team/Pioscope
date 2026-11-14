@@ -1,6 +1,6 @@
 # The RP2040 PIO model: what it implements
 
-**Audience:** anyone writing PIO programs for the bench, or comparing the model with real silicon. The instruction semantics are in [isa.md](isa.md), generated from `spec/isa/pio.yaml`, and the encoding is in [isa-encoding.html](isa-encoding.html). The code is `sim/dut/pio/`, on the generic core (`sim/dut/core`, [reference/simulator.md](../reference/simulator.md)).
+**Audience:** anyone writing PIO programs for the bench, or comparing the model with real silicon. The instruction semantics are in [isa.md](isa.md), generated from `pioscope/packs/pio/isa.yaml`, and the encoding is in [isa-encoding.html](isa-encoding.html). The code is `pioscope/dut/pio/`, on the generic core (`pioscope/dut/core`, [reference/simulator.md](../reference/simulator.md)).
 
 ## 1. What is modelled
 
@@ -53,13 +53,13 @@ On an RP2040, the Pico SDK does all of this from C (`sm_config_set_*`, `pio_sm_s
 
 ## 4. Not modelled (yet)
 
-- More than one SM per block running different programs. An image holds one program. A model can add SMs that run the same one (see `TwoSms` in `sim/packs/pio/tests/test_debug.py`).
+- More than one SM per block running different programs. An image holds one program. A model can add SMs that run the same one (see `TwoSms` in `pioscope/packs/pio/tests/test_debug.py`).
 - pioasm's `.origin`, `.word`, `public` labels, `.lang_opt` and `% c-sdk` blocks; programs are relocated to address 0.
 - Input synchroniser bypass, pin input/output inversion, FIFO debug flags (`FDEBUG`), and `SM_EXEC` from the host.
 - RP2350 additions (`mov pindirs`, `irq prev/next`, `wait jmppin`, `mov rxfifo[]`). [Tutorial 06](../tutorials/06-isa-change.md) adds the first as an exercise.
 
 ## 5. Checking against silicon
 
-- **Encoding:** `sim/packs/pio/tests/test_encode.py` compares the programs with pioasm's output and every instruction form with the datasheet's field tables. A Hypothesis test round-trips every 16-bit word.
+- **Encoding:** `pioscope/packs/pio/tests/test_encode.py` compares the programs with pioasm's output and every instruction form with the datasheet's field tables. A Hypothesis test round-trips every 16-bit word.
 - **Behaviour:** `test_exec.py` has a directed test per instruction and option. `test_scenarios.py` runs UART, SPI (modes 0–3) and I²C against the bench's device models and independent decoders, with timing checks.
 - **Optional:** if `pioasm` (Pico SDK) is on the PATH, `test_against_installed_pioasm` assembles the same programs with it.
