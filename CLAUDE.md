@@ -85,14 +85,12 @@ The tools (trace, VCD, debugger) show any unit a model reports, through the obse
 
 ## 5. Tooling and layout
 
-- **Python 3.12+**, `uv` for the environment and dependencies, `pytest` + `hypothesis`, `ruff`, `mypy --strict`.
+- **Python 3.12 or 3.13** (cocotb does not support 3.14 yet), `uv` for the environment and dependencies, `pytest` + `hypothesis`, `ruff`, `mypy --strict`.
 - Waveforms: `pyvcd` for VCD output (view in GTKWave or Surfer).
 - Pure Python; no compiled extensions.
 
 ```
 CLAUDE.md
-<pack>/isa.yaml       # single source of truth for each ISA (pio.yaml: RP2040 PIO)
-<pack>/arch/          # architecture study inputs: workloads, architectures, area costs
 docs/
   README.md                # documentation map: start here
   tutorials/               # hands-on: first program, device+decoder, probe, unit, ISA change
@@ -103,26 +101,31 @@ docs/
   arch-guide.md            # guide to the architecture study
   open_items/              # ADRs: one file per decision
   pio/                     # the PIO pack: machine-model.md + generated isa.md, isa-encoding.*, arch-study.*
-pioscope/                       # Python package
+pioscope/                  # the Python package (installable; everything below ships in the wheel)
   isa/                     # loads a pack's yaml
   asm/                     # lexer, operands, directives, encoder (hook), expressions, listing, errors
   image.py                 # ProgramImage (IR + words + config + pack) <-> JSON / hex
   wave.py                  # Waveform (the only module decoders may import)
   bench/                   # board, nets, pads, wiring, scenarios, loaders; backends/ python + cocotb_rtl
+    rtl/                   # the RTL harness tb.v and the Tiny Tapeout template stand-in (package data)
   dut/                     # DUT contract + stand-ins; core/ (the generic engine); pio/ (the PIO model)
   debug/                   # pioscope debug (GDB-style REPL) and pioscope dap (VS Code)
   devices/                 # bus partner models
   decoders/                # independent waveform decoders
   checks/                  # scoreboard + spec timing checks
-  packs/                   # ISA packs: pio/ (hooks, programs/, tests/)
+  packs/                   # pack discovery (built-ins + the `pioscope.packs` entry points)
+    pio/                   # the PIO pack: isa.yaml, arch/ (workloads, architectures, costs),
+                           #   programs/, hooks (directives, encode, demand), tests/
   examples/                # toy examples used by the tutorials
-  arch/                    # architecture study: demand, allocators, area model, report
-  scripts/                 # metrics, ISA doc generators
+  arch/                    # architecture study: demand, allocators, area model, report, viz page
+  scripts/                 # metrics, ISA doc generators, new_pack (the `new-pack` scaffold)
+  vscode/                  # VS Code extension; `pioscope vscode` builds it for the installed packs
+  testing.py               # pytest plugin (`pytest11`): bench, golden, --backend, --dut, ...
   cli.py                   # the `pioscope` command
   tests/                   # framework tests
-test/                      # Tiny Tapeout cocotb flow (tb.v, test.py, Makefile)
-pioscope/vscode/       # VS Code extension: highlighting for every pack + the debugger
 ```
+
+Other packs live in their own packages and register through the `pioscope.packs` entry point (`pioscope new-pack NAME`). Generated documents go to `docs/<pack>` under the working directory. The Tiny Tapeout project template is the separate `pioscope-tt-template` repo.
 
 ### CLI
 - `pioscope asm prog.pio -o prog.json --listing prog.lst [--hex DIR]`: instruction words + config image + listing. The suffix picks the pack.

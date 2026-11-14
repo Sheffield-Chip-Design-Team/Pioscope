@@ -16,7 +16,7 @@ That made it impossible to:
 - reuse the framework without carrying one particular ISA along.
 
 ## Decision
-1. An **ISA pack** bundles everything that belongs to one instruction set. A pack is a sub-package of `pioscope.packs` that defines `PACK = IsaPack(...)`:
+1. An **ISA pack** bundles everything that belongs to one instruction set. A pack is a module that defines `PACK = IsaPack(...)`: a sub-package of `pioscope.packs` (the built-in PIO pack) or any installed package registered under the `pioscope.packs` entry-point group (see *Consequences (packaging)*):
    - **spec:** `<pack>/isa.yaml`, the single source of truth for that ISA (CLAUDE.md §8 #1).
    - **model:** the engine model (`module:callable`), which is what `--dut engine` builds.
    - **demand:** the arch-study hooks (`units_used`, `bit_shares`, `fifos`).
@@ -40,3 +40,15 @@ That made it impossible to:
 - Generated documents move to the pack's `docs` directory, and arch-study data moves to `<pack>/arch/`.
 - The debugger, the trace and the VCD depend only on the core and the observability contract, never on one pack's model.
 - The arch study's unit list comes from the pack's `cost.yaml`, so a pack with no units is valid.
+
+## Consequences (packaging, 2026-11-14)
+PIOScope is an installable library. Downstream projects (Kraken, a new ISA, a tapeout) depend on it instead of copying it.
+- **Entry points.** `packs()` returns the built-in sub-packages plus every `pioscope.packs` entry point, so a pack in another package is found once it is installed. Two packs with one name is an error.
+- **Package-relative data.** A pack's spec, programs and arch data sit next to its module (`HERE = pack_dir(__file__)`), so the pack works from a wheel as well as from a checkout. The PIO pack's data is in `pioscope/packs/pio/`; there is no `spec/` directory.
+- **Docs under the working directory.** `IsaPack.docs` defaults to `docs/<name>` under the cwd: generated documents belong to the project being worked on, not to the installed library. Messages and documents show paths with `display_path()`.
+- **The pytest plugin.** The bench fixtures and options (`bench`, `golden`, `--backend`, `--dut`, `--waves`, `--update-golden`) are `pioscope.testing`, registered as `pytest11`, so a downstream project needs no conftest for them.
+- **The RTL harness is package data** (`pioscope/bench/rtl/`). `run_rtl` builds under the cwd and takes includes from the sources' directories.
+- **The VS Code extension** is package data too. `pioscope vscode` builds it for the installed packs, so the grammar and the file suffixes always match them; there is no committed grammar.
+- **`pioscope new-pack NAME`** scaffolds a pack project with its entry point, the minimal ISA, a model, arch data and tests. This is how a new ISA starts (docs/reference/isa-flow.md §5).
+- **The Tiny Tapeout template** is its own repository (`pioscope-tt-template`). PIOScope keeps only the bench side of it.
+- Generated pages are titled from the pack's `title`, never from the framework's name.

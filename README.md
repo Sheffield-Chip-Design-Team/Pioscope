@@ -36,7 +36,7 @@ An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs
 
 ```bash
 uv sync && uv run pytest                      # environment + test suite
-uv run pioscope --help                          # asm, sim, debug, dap, rtl, metrics, isa-docs, arch
+uv run pioscope --help                          # asm, sim, debug, dap, rtl, metrics, isa-docs, arch, vscode, new-pack
 uv run pioscope asm pioscope/packs/pio/programs/uart_tx.pio --listing build/uart_tx.lst
 uv run pioscope sim pioscope/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
     --baud 115200 --uart-send 0x55 --trace --vcd build/rx.vcd
@@ -49,15 +49,23 @@ VS Code: build and install the extension once (`uv run pioscope vscode && code -
 
 **Start here:** [docs/README.md](docs/README.md) (the documentation map), then [tutorials 01–04](docs/tutorials/).
 
-## Adding your own ISA
+## Use it in your project
 
-Copy the PIO pack's structure ([isa-flow.md §5](docs/reference/isa-flow.md#5-adding-an-isa-pack)):
-1. write a yaml spec;
-2. add directive or encoder hooks only where yaml can't say it;
-3. build an engine model on `pioscope.dut.core`;
-4. write programs and tests.
+PIOScope is a library: your ISA lives in **your own repository** and PIOScope finds it through an entry point. You don't fork PIOScope to add an ISA.
 
-The assembler, bench, debugger, waveforms, VS Code highlighting and arch study then work for it unchanged.
+```bash
+uv init myproject && cd myproject
+uv add "pioscope @ git+https://github.com/<owner>/pioscope@v0.2.0"   # until it is on PyPI
+uv run pioscope new-pack myisa       # writes ./myisa/: a ready-to-install pack project
+cd myisa && uv sync && uv run pytest
+uv run pioscope --isa myisa isa-docs && uv run pioscope --isa myisa arch --write
+```
+
+- **What `new-pack` writes.** A three-instruction ISA (`isa.yaml`), an engine model on `pioscope.dut.core`, the arch-study data, a `blink` program and tests. It is registered by `[project.entry-points."pioscope.packs"]`. Grow it from there ([isa-flow.md §5](docs/reference/isa-flow.md#5-adding-an-isa-pack)). Add directive or encoder hooks only where the yaml can't say it. The assembler, bench, debugger, waveforms, VS Code highlighting and arch study then work for it unchanged.
+- **Co-developing PIOScope and your pack.** Use an editable path instead of the git source: `[tool.uv.sources] pioscope = { path = "../pioscope", editable = true }`. `new-pack` writes this line itself when it runs from a PIOScope checkout, or pass `--pioscope PATH_OR_URL`. Pin a tag in CI.
+- **Tests.** The pytest plugin is installed with PIOScope, so any project gets the `bench` and `golden` fixtures and the `--backend`, `--dut`, `--waves` and `--update-golden` options without a conftest.
+- **Python.** 3.12 or 3.13. cocotb does not support 3.14 yet.
+- **A tapeout.** Start from the `pioscope-tt-template` repository (below).
 
 ## Contributing
 
