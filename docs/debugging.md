@@ -22,11 +22,11 @@ All three run **the same simulation**. The debugger steps the same `PySession` t
 uv sync                                   # Python environment
 uv run pioscope --help                      # the CLI
 sudo apt install gtkwave                  # waveform viewer (or use Surfer)
-uv run python tools/vscode-pioscope/build.py   # VS Code extension package
-code --install-extension tools/vscode-pioscope/pioscope-asm-0.1.0.vsix
+uv run pioscope vscode   # VS Code extension package
+code --install-extension build/pioscope-asm-0.1.0.vsix
 ```
 
-Then, in VS Code, run **Developer: Reload Window** (Ctrl+Shift+P). If VS Code can't find `uv`, set `pioscope.adapterCommand` to its full path (`~/.local/bin/uv`). Rebuild and reinstall the extension whenever `tools/vscode-pioscope/` changes.
+Then, in VS Code, run **Developer: Reload Window** (Ctrl+Shift+P). If VS Code can't find `uv`, set `pioscope.adapterCommand` to its full path (`~/.local/bin/uv`). Rebuild and reinstall the extension whenever `pioscope/vscode/` changes.
 
 **Vocabulary:**
 - **Core:** one core of an engine model, with a PC, X/Y, shift registers, FIFOs and any units of its own. The PIO model calls its cores state machines and names them `sm0`, `sm1`, …
@@ -208,7 +208,7 @@ uv run pioscope debug pioscope/packs/pio/programs/uart_tx.pio --device uart_part
 
 ## 4. VS Code
 
-The extension in `tools/vscode-pioscope/` adds syntax highlighting for every pack's source files and a `pioscope` debugger. Its adapter is `pioscope dap`: the same debugger, spoken over the Debug Adapter Protocol.
+The extension in `pioscope/vscode/` adds syntax highlighting for every pack's source files and a `pioscope` debugger. Its adapter is `pioscope dap`: the same debugger, spoken over the Debug Adapter Protocol.
 
 1. **Start.** Open a program (`.pio`, …), click in the gutter to set breakpoints, and press F5.
    - With no `launch.json`, F5 debugs the active file with a UART partner attached.

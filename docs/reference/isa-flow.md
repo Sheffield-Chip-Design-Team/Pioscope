@@ -161,7 +161,7 @@ A pack that models an existing ISA (PIO) changes only to match that ISA more clo
 4. **Model:** subclass `pioscope.dut.core.Core` and `Engine` (`pioscope/dut/pio` is a complete example), with one handler per instruction from `pioscope.dut.core.registry()`.
 5. **Arch study:** `<package>/arch/{cost,architectures,workloads}.yaml` and a `demand` module (`units_used`, `bit_shares`, `fifos`, `bit_rate`; `pioscope/packs/pio/demand.py` is the minimal one).
 6. **Tests:** `pioscope/packs/<name>/tests/` with a `conftest.py` that activates the pack (copy PIO's). Scenarios run on the model by default.
-7. Run `uv run python tools/vscode-pioscope/build.py`: the editor grammar picks up the new mnemonics and the new file suffix.
+7. Run `uv run pioscope vscode`: the editor grammar picks up the new mnemonics and the new file suffix.
 
 ---
 

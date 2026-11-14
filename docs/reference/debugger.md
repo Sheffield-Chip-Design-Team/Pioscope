@@ -9,7 +9,7 @@
                 │ write_vcd/to_gtkw at every stop                                │
  pioscope dap ────┤                                                              │
   dap.py        └──────────────────────────────────────────────────────────────┘
-  (VS Code: tools/vscode-pioscope/extension.js starts `uv run pioscope dap`)
+  (VS Code: pioscope/vscode/extension.js starts `uv run pioscope dap`)
 ```
 
 ## 1. `DebugSession` (session.py)
@@ -62,17 +62,17 @@ The Debug Console in VS Code runs the same `Repl` for any line starting with a k
 
 **Add a launch attribute:**
 1. Read it in `factory_from_launch`, `dut_from_launch` or `req_launch`.
-2. Declare it in `tools/vscode-pioscope/package.json` under `configurationAttributes.launch.properties`. `test_extension_launch_attributes_match_the_adapter` checks that the two agree.
-3. Rebuild the extension: `uv run python tools/vscode-pioscope/build.py`, then `code --install-extension tools/vscode-pioscope/pioscope-asm-0.1.0.vsix`, then reload the window.
+2. Declare it in `pioscope/vscode/package.json` under `configurationAttributes.launch.properties`. `test_launch_attributes_match_the_adapter` checks that the two agree.
+3. Rebuild the extension: `uv run pioscope vscode`, then `code --install-extension build/pioscope-asm-0.1.0.vsix`, then reload the window.
 
 **Debugging the adapter.** The `Dap` class in `pioscope/packs/pio/tests/test_debug.py` is a small DAP client; copy a test and print the messages. An adapter exception is sent to the Debug Console as stderr, and the request fails with its message.
 
-## 4. The extension (tools/vscode-pioscope)
+## 4. The extension (pioscope/vscode)
 
 | File | Contents |
 |---|---|
 | `package.json` | the language, grammar, debugger type `pioscope`, launch attributes, `pioscope.adapterCommand` setting |
 | `extension.js` | default configuration for F5 without `launch.json`; finds the project directory; starts `uv run pioscope dap` |
-| `build.py` | regenerates `pioscope.tmLanguage.json` from every ISA pack's yaml (mnemonics, directives, conditions, keywords), sets the language's file suffixes, and packs the `.vsix` |
+| `build.py` | `pioscope vscode`: generates the grammar from every *installed* ISA pack's yaml (mnemonics, directives, conditions, keywords), sets the language's file suffixes, and packs the `.vsix` |
 
-The grammar is generated, so new instructions are highlighted after a rebuild (`test_extension_grammar_is_current` fails until you do).
+The grammar is generated at build time, so run `pioscope vscode` in your project's environment and every pack installed there, yours included, is highlighted. Rebuild after adding instructions.

@@ -48,7 +48,7 @@ An instruction with new behaviour needs a new handler instead: one `@handler("na
 
 ```bash
 uv run pioscope --isa pio isa-docs        # docs/pio/isa.md, isa-encoding.adoc/.html
-uv run python tools/vscode-pioscope/build.py # syntax highlighting
+uv run pioscope vscode # syntax highlighting
 uv run pytest && uv run ruff check pioscope && uv run mypy
 ```
 
