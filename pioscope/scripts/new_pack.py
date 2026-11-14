@@ -17,6 +17,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+REPO = "https://github.com/Sheffield-Chip-Design-Team/Pioscope"
 PACKS = Path(__file__).resolve().parent.parent / "packs" / "pio"
 
 PYPROJECT = '''[project]
@@ -337,7 +338,7 @@ def scaffold(name: str, out: Path, pioscope: str | None = None) -> Path:
             pioscope = os.path.relpath(checkout, root)
     if pioscope is None:
         source = ('# pioscope = { path = "../pioscope", editable = true }   # co-development\n'
-                  '# pioscope = { git = "https://github.com/Sheffield-Chip-Design-Team/Pioscope", tag = "v0.2.0" }')
+                  f'# pioscope = {{ git = "{REPO}", tag = "v0.2.0" }}')
     elif "://" in pioscope or pioscope.startswith("git@"):
         source = f'pioscope = {{ git = "{pioscope}" }}'
     elif pioscope.endswith(".whl"):
