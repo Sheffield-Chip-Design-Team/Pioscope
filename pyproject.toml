@@ -1,6 +1,6 @@
 [project]
 name = "pioscope"
-version = "0.1.0"
+version = "0.2.0"
 description = "PIOScope: ISA-pack assembler, engine models, verification bench and debugger (pre-RTL)"
 requires-python = ">=3.12"
 dependencies = [
