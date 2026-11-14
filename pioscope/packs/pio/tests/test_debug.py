@@ -1,4 +1,4 @@
-"""The debugger on the PIO model: DebugSession, the kdb REPL and the DAP server (VS Code),
+"""The debugger on the PIO model: DebugSession, the REPL and the DAP server (VS Code),
 and the observability contract (ADR-0010) with a model of two state machines."""
 
 from __future__ import annotations

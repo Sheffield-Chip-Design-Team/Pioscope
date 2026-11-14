@@ -58,7 +58,7 @@ The Debug Console in VS Code runs the same `Repl` for any line starting with a k
 | `next` / `stepIn` / `stepOut` / `continue` | select the thread's core, then `step` / `stepi` / `finish` / `cont` |
 | `setBreakpoints` / `setInstructionBreakpoints` | `set_line_breakpoints` / `set_instruction_breakpoints` |
 | `disassemble` | `disassemble(start, n, ti)`; addresses `0xTAAA` |
-| `evaluate` | a kdb command (context `repl`), or `eval(expr, ti)` |
+| `evaluate` | a debugger command (context `repl`), or `eval(expr, ti)` |
 
 **Add a launch attribute:**
 1. Read it in `factory_from_launch`, `dut_from_launch` or `req_launch`.

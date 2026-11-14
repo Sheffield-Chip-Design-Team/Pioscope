@@ -7,7 +7,7 @@ Mapping to the debugger:
   Continue -> cont      Step Over (next) -> step (one instruction)
   Step Into -> stepi (one sysclk cycle)  Step Out -> finish
 Breakpoints are set on lines of program source files. Data breakpoints (right-click a variable,
-"Break on Value Change") are watches. The Debug Console accepts `kdb` commands
+"Break on Value Change") are watches. The Debug Console accepts debugger commands
 (`info units`, `p/x isr`, `x/8i`, `catch event partner:rx`, ...) or a state path.
 
 Everything shown is derived from the model (ADR-0010): one thread per core, one
@@ -255,7 +255,7 @@ class DapServer:
                     f"cores {self.s.names}; "
                     "Step Over = one instruction, Step Into = one sysclk cycle, "
                     "Step Out = finish the current instruction. The Debug Console takes "
-                    "kdb commands (help).")
+                    "debugger commands (help).")
 
     def req_setBreakpoints(self, req: dict[str, Any], a: dict[str, Any]) -> None:
         path = a.get("source", {}).get("path", "")

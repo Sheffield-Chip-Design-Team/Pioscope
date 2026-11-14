@@ -7,7 +7,7 @@ Syntax highlighting for the ISA packs' assembly (`.pio` for RP2040 PIO, and ever
 - **Step Into** runs one sysclk cycle.
 - **Step Out** finishes the current instruction.
 - The Variables view shows the registers, flags, FIFOs, units, pins and any group the model adds (Config on PIO), plus the shared units. Right-click a variable and choose "Break on Value Change" to set a watch.
-- The Debug Console takes `kdb` commands, e.g. `info shared`, `p/x isr`, `x/8i`, `catch event partner:rx`, `info events 20`.
+- The Debug Console takes debugger commands, e.g. `info shared`, `p/x isr`, `x/8i`, `catch event partner:rx`, `info events 20`.
 
 Install (from the project directory, in the VS Code terminal):
 

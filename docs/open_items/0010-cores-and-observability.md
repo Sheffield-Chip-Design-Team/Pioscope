@@ -34,5 +34,5 @@ Each new core or unit would have meant editing the debugger, the bench and the V
 3. **Waveform layout follows the model.** Probe names are nested scopes in the VCD, and `Waveform.to_gtkw()` writes a GTKWave save file grouped per core, unit and shared unit. The debugger writes both at every stop when `vcd` is set.
 
 ## Consequences
-- `pioscope/packs/pio/tests/test_debug.py` keeps the promise. A two-SM model with an extra unit, defined only in the test, is traced, recorded, and debugged in kdb and over DAP. The PIO model's shared `gpio` and `irq` units appear without tool changes.
+- `pioscope/packs/pio/tests/test_debug.py` keeps the promise. A two-SM model with an extra unit, defined only in the test, is traced, recorded, and debugged in the REPL and over DAP. The PIO model's shared `gpio` and `irq` units appear without tool changes.
 - New models subclass the core `Engine` and override `build()`, or provide the contract directly.

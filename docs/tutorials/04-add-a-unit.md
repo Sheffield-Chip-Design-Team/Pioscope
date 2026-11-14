@@ -31,10 +31,10 @@ class EdgeCountingEngine(PioEngine):
 ```bash
 uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario \
     --dut pioscope.examples.edge_counter:EdgeCountingEngine --vcd build/edges.vcd
-(kdb) stepi 1000
-(kdb) info units edge_counter      # edges=5
-(kdb) watch units.edge_counter.edges
-(kdb) continue                     # stops at the next edge
+(pioscope) stepi 1000
+(pioscope) info units edge_counter      # edges=5
+(pioscope) watch units.edge_counter.edges
+(pioscope) continue                     # stops at the next edge
 ```
 
 In VS Code, add `"dut": "pioscope.examples.edge_counter:EdgeCountingEngine"` to the Blink configuration from tutorial 01. Open Variables → Units → edge_counter. In GTKWave, the unit has its own sub-group under sm0.

@@ -1,6 +1,6 @@
 # Tutorial 03: make a new value visible in the debugger and the waveform
 
-**You will:** add a value to the core and see it in VS Code, kdb and GTKWave without touching the debugger. **Background:** [reference/simulator.md §7](../reference/simulator.md#7-the-observability-contract-adr-0010).
+**You will:** add a value to the core and see it in VS Code, the REPL and GTKWave without touching the debugger. **Background:** [reference/simulator.md §7](../reference/simulator.md#7-the-observability-contract-adr-0010).
 
 The tools show whatever the model reports:
 - `Core.state()` feeds the debugger: each dict-valued key becomes a VS Code scope.
@@ -28,7 +28,7 @@ Add a dict-valued key to `Core.state()`:
          "ipc_x1000": 1000 * self.issued // max(self.cycle, 1)},
 ```
 
-Start a debug session: a **Perf** scope appears in VS Code. `info perf` and `print perf.ipc_x1000` work in kdb. No debugger file changed.
+Start a debug session: a **Perf** scope appears in VS Code. `info perf` and `print perf.ipc_x1000` work in `pioscope debug`. No debugger file changed.
 
 ## Rules
 - State values must be plain data: int, bool, str, None, and dicts or lists of those.

@@ -2,12 +2,12 @@
 
     uv run pioscope debug pioscope/packs/pio/programs/uart_rx.pio --device uart_partner \
         --baud 115200 --uart-send 0x55
-    (kdb) break bitloop
-    (kdb) continue
-    (kdb) step
-    (kdb) p/x isr
-    (kdb) info shared
-    (kdb) info cores          # every core of the model; `core sm1` selects one
+    (pioscope) break bitloop
+    (pioscope) continue
+    (pioscope) step
+    (pioscope) p/x isr
+    (pioscope) info shared
+    (pioscope) info cores          # every core of the model; `core sm1` selects one
 
 `help` lists the commands; an empty line repeats the last one, as in GDB. Nothing here
 names a register, unit or core: `info`, `print` and the stop reports read whatever the
@@ -46,7 +46,7 @@ def fmt(v: Any, f: str = "") -> str:
 
 
 class Repl(cmd.Cmd):
-    prompt = "(kdb) "
+    prompt = "(pioscope) "
     intro = ("PIOScope debugger (engine model v0). `help` for commands; "
              "`break <label|line>`, then `continue`.")
 

@@ -141,29 +141,29 @@ It takes the same program, scenario and device options as `pioscope sim`, plus:
 A short session:
 
 ```
-(kdb) break bitloop
+(pioscope) break bitloop
 Breakpoint 1 at pc=2: file pioscope/packs/pio/programs/uart_rx.pio, line 13.
-(kdb) continue
+(pioscope) continue
 Breakpoint 1, bitloop () at pioscope/packs/pio/programs/uart_rx.pio:13
   13            in   pins, 1                 ; sample a data bit
-(kdb) x/4i 0
+(pioscope) x/4i 0
    start:
       0  wait 0 pin 0                     ; uart_rx.pio:10
       1  set x, 7 [10]                    ; uart_rx.pio:11
    bitloop:
 =>B   2  in pins, 1                       ; uart_rx.pio:13
       3  jmp x-- bitloop [6]              ; uart_rx.pio:14
-(kdb) finish
+(pioscope) finish
 [cycle 1627] pc=3 at pioscope/packs/pio/programs/uart_rx.pio:14
-(kdb) p/x isr
+(pioscope) p/x isr
 $ = 0x80000000
-(kdb) info shared
+(pioscope) info shared
 gpio: out=0x000000, oe=0x000000
 irq: flags=0b00000000
-(kdb) watch isr                  # stop when ISR changes
-(kdb) catch event sm0:push
-(kdb) display/x isr
-(kdb) continue
+(pioscope) watch isr                  # stop when ISR changes
+(pioscope) catch event sm0:push
+(pioscope) display/x isr
+(pioscope) continue
 ```
 
 | Command | Does |
@@ -235,7 +235,7 @@ The extension in `pioscope/vscode/` adds syntax highlighting for every pack's so
    - **Watch:** add any expression from §3.
    - **Hover** over a name in the editor to see its value.
    - **Disassembly:** right-click in the editor → **Open Disassembly View**. It shows the instruction memory with the binary words (16-bit on PIO) and the labels. Click its gutter for an address breakpoint. An address `0xTAAA` means core T, word address AAA.
-   - **Debug Console:** type kdb commands (`info cores`, `info shared`, `p/x isr`, `x/8i`, `catch event uart_partner:rx`, `info events 20`) or an expression. Running and stepping go through the toolbar.
+   - **Debug Console:** type debugger commands (`info cores`, `info shared`, `p/x isr`, `x/8i`, `catch event uart_partner:rx`, `info events 20`) or an expression. Running and stepping go through the toolbar.
 
    Panels named **Peripherals**, **Registers** or **Memory** come from other extensions (PlatformIO, Cortex-Debug) and stay empty here; hide them with a right-click on their header.
 
@@ -258,13 +258,13 @@ The extension in `pioscope/vscode/` adds syntax highlighting for every pack's so
 
 ## 5. Watching waveforms while you step
 
-Set `"vcd": "${workspaceFolder}/build/debug.vcd"` in the launch configuration, or type `vcd build/debug.vcd` in the Debug Console or kdb. At every stop the debugger rewrites:
+Set `"vcd": "${workspaceFolder}/build/debug.vcd"` in the launch configuration, or type `vcd build/debug.vcd` in the Debug Console or `pioscope debug`. At every stop the debugger rewrites:
 - `build/debug.vcd`: everything recorded so far, cut at the current cycle;
 - `build/debug.gtkw`: the layout.
 
 1. Start debugging. The files appear at the first stop.
 2. Open them once: `gtkwave build/debug.vcd build/debug.gtkw &`.
-3. Step in VS Code (or kdb), then press **Ctrl+Shift+R** in GTKWave to reload. The trace grows to the cycle you stopped at, and your layout is kept.
+3. Step in VS Code (or `pioscope debug`), then press **Ctrl+Shift+R** in GTKWave to reload. The trace grows to the cycle you stopped at, and your layout is kept.
 4. Restart cuts the file back to cycle 0.
 
 The viewer does not follow the debugger on its own: reload it after each step.

@@ -261,7 +261,7 @@ The image format holds one program, so every core runs the same one. Giving each
 | A pack's handlers (directed, one behaviour each) | `pioscope/packs/pio/tests/test_exec.py` |
 | A pack's encoding | `pioscope/packs/pio/tests/test_encode.py` |
 | A pack's programs against devices and decoders | `pioscope/packs/pio/tests/test_scenarios.py` (run on the model by default, `--dut auto`) |
-| Debugger (kdb and DAP), tools follow the model | `pioscope/packs/pio/tests/test_debug.py` |
+| Debugger (REPL and DAP), tools follow the model | `pioscope/packs/pio/tests/test_debug.py` |
 | Bench, devices, decoders, examples, VS Code extension | `pioscope/tests/` |
 
 Run `uv run pytest`, `uv run ruff check pioscope` and `uv run mypy` before every commit.

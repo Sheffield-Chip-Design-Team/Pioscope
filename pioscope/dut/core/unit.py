@@ -6,7 +6,7 @@ The debugger, the trace and the VCD never name a unit: they iterate over
 `Core.units` and `Engine.shared` and ask each one for:
 
 - `state()`: everything worth seeing, as plain data (dicts, lists, ints, bools, str).
-  It appears in VS Code's Variables view under Units and in kdb's `info units`.
+  It appears in VS Code's Variables view under Units and in the REPL's `info units`.
 - `probes()`: integer signals recorded into the VCD on change, as
   `engine.<core>.units.<name>.<probe>`; `probe_bits()` gives their widths.
 

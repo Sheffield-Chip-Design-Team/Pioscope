@@ -11,8 +11,8 @@ That is all it takes: the unit appears in VS Code (Variables > Units), in
 
 Run it:  uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario \
              --dut pioscope.examples.edge_counter:EdgeCountingEngine
-         (kdb) stepi 1000
-         (kdb) info units edge_counter
+         (pioscope) stepi 1000
+         (pioscope) info units edge_counter
 """
 
 from __future__ import annotations

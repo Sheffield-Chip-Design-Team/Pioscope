@@ -54,12 +54,12 @@ In the left tree, open `bench` and add `led`, then open `engine` → `sm0` and a
 
 ```bash
 uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario
-(kdb) info program          # the 2 instructions
-(kdb) step                  # one instruction (stops before the next issues)
-(kdb) info pins             # led=1
-(kdb) stepi 25              # 25 sysclk cycles = 1 SM cycle
-(kdb) info cores        # pc and the stall reason ("delay")
-(kdb) continue 1000
+(pioscope) info program          # the 2 instructions
+(pioscope) step                  # one instruction (stops before the next issues)
+(pioscope) info pins             # led=1
+(pioscope) stepi 25              # 25 sysclk cycles = 1 SM cycle
+(pioscope) info cores        # pc and the stall reason ("delay")
+(pioscope) continue 1000
 ```
 
 In VS Code, open `blink.pio`, add this configuration to `.vscode/launch.json`, and press F5:
