@@ -1,0 +1,38 @@
+; I2C master write: START, then every byte in the TX FIFO (left-justified, byte << 24),
+; each with its ACK bit pushed to the RX FIFO (0 = ACK), then STOP once the FIFO is
+; empty. Both lines are open drain: a pin is driven low by setting its direction
+; (pindir 1, output level 0) and released by clearing it. SCL is side-set; waiting
+; for SCL to read high after releasing it supports clock stretching. No multi-master
+; arbitration. SCL period: 32 SM cycles x 32 = 1024 sysclk (about 49 kHz).
+.program i2c_write
+.pins      sda=uio0/open_drain scl=uio1/open_drain
+.side_set  1 opt pindirs
+.sm_config out=sda set=sda in=sda sideset=scl jmp=sda out_shift=left in_shift=left status=tx<1
+.clkdiv    32
+
+start:
+        pull                         ; the first byte
+        set  pindirs, 1        [7]   ; START: SDA falls while SCL is high
+byte:
+        mov  osr, ~osr               ; pindir 1 pulls low, so send the inverted bits
+        set  x, 7       side 1 [7]   ; SCL low
+bitloop:
+        out  pindirs, 1        [7]   ; data bit, while SCL is low
+        nop             side 0 [7]   ; release SCL
+        wait 1 pin 1           [7]   ; until it reads high (stretching)
+        jmp  x-- bitloop side 1 [7]  ; SCL low
+        set  pindirs, 0        [7]   ; release SDA for the ACK
+        nop             side 0 [7]   ; release SCL
+        wait 1 pin 1           [3]
+        in   pins, 1           [3]   ; the ACK bit
+        push            side 1 [7]   ; SCL low; report it
+        mov  x, status               ; all ones when the TX FIFO is empty
+        jmp  !x more
+        set  pindirs, 1        [7]   ; STOP: SDA low...
+        nop             side 0 [7]   ; ...SCL released...
+        wait 1 pin 1           [7]
+        set  pindirs, 0        [7]   ; ...then SDA rises while SCL is high
+        jmp  start
+more:
+        pull
+        jmp  byte

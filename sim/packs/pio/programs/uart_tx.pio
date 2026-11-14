@@ -1,0 +1,14 @@
+; UART TX, 8N1, LSB first. The host pushes one byte per word (low 8 bits).
+; Each bit is 8 SM cycles, so the SM clock is 8x the baud rate:
+; 50 MHz / (8 x 115200) = 54.25.
+.program uart_tx
+.pins      tx=uo0
+.side_set  1 opt
+.sm_config out=tx sideset=tx high=tx
+.clkdiv    54.25
+
+        pull            side 1 [7]   ; stop bit / idle; wait for data
+        set  x, 7       side 0 [7]   ; start bit; 8 data bits to go
+bitloop:
+        out  pins, 1                 ; data bit
+        jmp  x-- bitloop       [6]

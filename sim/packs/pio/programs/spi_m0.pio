@@ -1,0 +1,13 @@
+; SPI master, mode 0 (CPOL=0, CPHA=0), MSB first, 8-bit frames. SCK is side-set.
+; The host pushes each byte left-justified (byte << 24); received bytes arrive in
+; the low 8 bits. Autopull/autopush at 8 bits do the FIFO work. CS is the host's.
+; SCK = 50 MHz / 4 / 4 = 3.125 MHz: the SM clock must leave the 2-cycle input
+; synchroniser time to see MISO before the sampling edge.
+.program spi_m0
+.pins      sck=uo1 mosi=uo2 miso=ui0
+.side_set  1
+.sm_config out=mosi in=miso sideset=sck out_shift=left in_shift=left autopull=8 autopush=8
+.clkdiv    4
+
+        out  pins, 1    side 0 [1]   ; data out while SCK is low
+        in   pins, 1    side 1 [1]   ; sample on the rising edge

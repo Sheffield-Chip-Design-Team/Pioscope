@@ -1,0 +1,9 @@
+; SPI master, mode 2 (CPOL=1, CPHA=0), MSB first, 8-bit frames. See spi_m0.pio.
+.program spi_m2
+.pins      sck=uo1 mosi=uo2 miso=ui0
+.side_set  1
+.sm_config out=mosi in=miso sideset=sck out_shift=left in_shift=left autopull=8 autopush=8 high=sck
+.clkdiv    4
+
+        out  pins, 1    side 1 [1]   ; data out while SCK is high (idle)
+        in   pins, 1    side 0 [1]   ; sample on the falling edge

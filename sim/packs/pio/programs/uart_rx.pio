@@ -1,0 +1,20 @@
+; UART RX, 8N1, LSB first. Bytes arrive in the RX FIFO in bits 31..24 (in_shift
+; right). The SM runs at 8x the baud rate. A bad stop bit (framing error or break)
+; raises IRQ 4 and waits for the line to go idle instead of pushing.
+.program uart_rx
+.pins      rx=ui0
+.sm_config in=rx jmp=rx
+.clkdiv    54.25
+
+start:
+        wait 0 pin 0                 ; the start bit begins
+        set  x, 7       [10]         ; then to the middle of data bit 0 (12 cycles in all)
+bitloop:
+        in   pins, 1                 ; sample a data bit
+        jmp  x-- bitloop [6]         ; 8 cycles per bit
+        jmp  pin good_stop           ; the stop bit must be high
+        irq  4 rel                   ; framing error or break: flag it
+        wait 1 pin 0                 ; and wait for the line to idle
+        jmp  start
+good_stop:
+        push                         ; a good byte

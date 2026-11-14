@@ -1,0 +1,651 @@
+= RP2040 PIO: instruction encoding
+:toc: left
+:toclevels: 2
+:sectnums:
+
+RP2040 PIO, ISA version 1.0.0. Generated from `spec/isa/pio.yaml` by `pioscope isa-docs`; do not edit.
+
+Diagrams show the most significant bit on the left. Under each box: the fixed value in binary, or the slot width in bits. `-` slots are reserved and must be 0; a `!` marks a field whose contents do not fit. The WaveDrom figures render with asciidoctor-diagram or a Kroki server.
+
+== Word format
+
+Every instruction is one 16-bit word made of fixed fields. Each instruction packs its operands into these fields, MSB first.
+
+....
+  15    13    12    8      7    0
++----------+------------+---------+
+|  opcode  | delay_side | operand |
++----------+------------+---------+
+     3           5           8
+....
+
+[wavedrom, target=enc-word, format=svg]
+....
+{reg: [{"bits": 8, "name": "operand", "type": 4}, {"bits": 5, "name": "delay_side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="1,1,1,5",options="header"]
+|===
+| Field | Bits | Width | Role
+| `opcode` | 15:13 | 3 | the major opcode (`push` and `pull` share 4, told apart by bit 7; `nop` is `mov y, y`)
+| `delay_side` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left
+| `operand` | 7:0 | 8 | the instruction's arguments
+|===
+
+[[opcode-map]]
+== Opcode map
+
+[cols="1,1,2,1",options="header"]
+|===
+| Opcode | Binary | Mnemonic | Status
+| 0 | `000` | <<instr-jmp,`jmp`>> | stable
+| 1 | `001` | <<instr-wait,`wait`>> | stable
+| 2 | `010` | <<instr-in,`in`>> | stable
+| 3 | `011` | <<instr-out,`out`>> | stable
+| 4 | `100` | <<instr-push,`push`>>, <<instr-pull,`pull`>> | stable
+| 5 | `101` | <<instr-mov,`mov`>>, <<instr-nop,`nop`>> | stable
+| 6 | `110` | <<instr-irq,`irq`>> | stable
+| 7 | `111` | <<instr-set,`set`>> | stable
+|===
+
+0 of 8 opcodes are free.
+
+== Encoding pressure
+
+Bits each instruction uses in each field (structural fields at full width). *Bold* = field exactly full; `!` = overflow.
+
+[cols="2,1,1,1",options="header"]
+|===
+| Instruction | opcode (3) | delay_side (5) | operand (8)
+| `jmp` | 3 | 5 | *8*
+| `wait` | 3 | 5 | *8*
+| `in` | 3 | 5 | *8*
+| `out` | 3 | 5 | *8*
+| `push` | 3 | 5 | 3
+| `pull` | 3 | 5 | 3
+| `mov` | 3 | 5 | *8*
+| `irq` | 3 | 5 | *8*
+| `set` | 3 | 5 | *8*
+| `nop` | 3 | 5 | *8*
+|===
+
+== Instructions
+
+[[instr-jmp]]
+=== `jmp`
+
+Syntax: `+jmp [cond], target+` +
+Opcode 0 · status stable · modifiers: delay, side
+
+If cond is true, set the PC to target; otherwise continue. x--/y-- decrement the register even when the jump is not taken.
+
+....
+  15    13    12    8     7    5   4    0
++----------+------------+--------+--------+
+|  opcode  | delay/side |  cond  | target |
++----------+------------+--------+--------+
+    000          5          3        5
+....
+
+[wavedrom, target=enc-jmp, format=svg]
+....
+{reg: [{"bits": 5, "name": "target", "type": 4}, {"bits": 3, "name": "cond", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "000"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 0 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+cond+` | 7:5 | 3 | condition code, see <<conditions>>
+| `+target+` | 4:0 | 5 | instruction address 0..31 (label)
+|===
+
+Example, `i2c_write.pio:23` (program `i2c_write`): `jmp x-- bitloop side 1 [7]` -> `0x1f44`
+
+....
+  15    13      12      11    10    8   7    5   4    0
++----------+---------+------+---------+--------+--------+
+|  opcode  | side.en | side |  delay  |  cond  | target |
++----------+---------+------+---------+--------+--------+
+    000         1       1       111      010     00100
+....
+
+[[instr-wait]]
+=== `wait`
+
+Syntax: `+wait pol, src, idx, [rel]+` +
+Opcode 1 · status stable · modifiers: delay, side
+
+Stall until the source equals pol: gpio = absolute GPIO idx, pin = input pin idx (relative to the in base), irq = IRQ flag idx (0-7; rel adds the SM number modulo 4). A satisfied `wait 1 irq` clears the flag.
+
+....
+  15    13    12    8      7    6    5   4    0
++----------+------------+-----+--------+--------+
+|  opcode  | delay/side | pol |  src   |  idx   |
++----------+------------+-----+--------+--------+
+    001          5         1      2        5
+....
+
+[wavedrom, target=enc-wait, format=svg]
+....
+{reg: [{"bits": 5, "name": "idx", "type": 4}, {"bits": 2, "name": "src", "type": 4}, {"bits": 1, "name": "pol", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "001"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 1 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+pol+` | 7 | 1 | code of value, see <<type-pol,pol>>
+| `+src+` | 6:5 | 2 | code of value, see <<type-wait_src,wait_src>>
+| `+idx+` | 4:0 | 5 | unsigned integer 0..31
+|===
+
+Example, `i2c_write.pio:22` (program `i2c_write`): `wait 1 pin 1 [7]` -> `0x27a1`
+
+....
+  15    13      12      11    10    8    7    6    5   4    0
++----------+---------+------+---------+-----+--------+--------+
+|  opcode  | side.en | side |  delay  | pol |  src   |  idx   |
++----------+---------+------+---------+-----+--------+--------+
+    001         0       0       111      1      01     00001
+....
+
+[[instr-in]]
+=== `in`
+
+Syntax: `+in src, count+` +
+Opcode 2 · status stable · modifiers: delay, side
+
+Shift count bits from src into ISR (direction from `.sm_config in_shift=`) and add count to the input shift count (saturating at 32). With autopush, push ISR when the count reaches the threshold, stalling while the RX FIFO is full.
+
+....
+  15    13    12    8     7    5   4    0
++----------+------------+--------+--------+
+|  opcode  | delay/side |  src   | count  |
++----------+------------+--------+--------+
+    010          5          3        5
+....
+
+[wavedrom, target=enc-in, format=svg]
+....
+{reg: [{"bits": 5, "name": "count", "type": 4}, {"bits": 3, "name": "src", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "010"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 2 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+src+` | 7:5 | 3 | code of value, see <<type-in_src,in_src>>
+| `+count+` | 4:0 | 5 | unsigned integer 1..32, 32 written as 0
+|===
+
+Example, `i2c_write.pio:27` (program `i2c_write`): `in pins, 1 [3]` -> `0x4301`
+
+....
+  15    13      12      11    10    8   7    5   4    0
++----------+---------+------+---------+--------+--------+
+|  opcode  | side.en | side |  delay  |  src   | count  |
++----------+---------+------+---------+--------+--------+
+    010         0       0       011      000     00001
+....
+
+[[instr-out]]
+=== `out`
+
+Syntax: `+out dst, count+` +
+Opcode 3 · status stable · modifiers: delay, side
+
+Shift count bits out of OSR (direction from `.sm_config out_shift=`) to dst and add count to the output shift count. pc jumps; exec runs the data as an instruction next cycle. With autopull, refill OSR from the TX FIFO when the count reaches the threshold, stalling while it is empty.
+
+....
+  15    13    12    8     7    5   4    0
++----------+------------+--------+--------+
+|  opcode  | delay/side |  dst   | count  |
++----------+------------+--------+--------+
+    011          5          3        5
+....
+
+[wavedrom, target=enc-out, format=svg]
+....
+{reg: [{"bits": 5, "name": "count", "type": 4}, {"bits": 3, "name": "dst", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "011"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 3 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+dst+` | 7:5 | 3 | code of value, see <<type-out_dst,out_dst>>
+| `+count+` | 4:0 | 5 | unsigned integer 1..32, 32 written as 0
+|===
+
+Example, `i2c_write.pio:20` (program `i2c_write`): `out pindirs, 1 [7]` -> `0x6781`
+
+....
+  15    13      12      11    10    8   7    5   4    0
++----------+---------+------+---------+--------+--------+
+|  opcode  | side.en | side |  delay  |  dst   | count  |
++----------+---------+------+---------+--------+--------+
+    011         0       0       111      100     00001
+....
+
+[[instr-push]]
+=== `push`
+
+Syntax: `+push [iffull], [mode]+` +
+Opcode 4 · status stable · modifiers: delay, side
+
+Push ISR to the RX FIFO and clear it. iffull: do nothing unless the input count has reached the push threshold. block (default): stall while the FIFO is full; noblock: drop the data instead.
+
+....
+  15    13    12    8     7     6       5     4    0
++----------+------------+---+--------+------+--------+
+|  opcode  | delay/side | 0 | iffull | mode |   -    |
++----------+------------+---+--------+------+--------+
+    100          5        0     1       1     00000
+....
+
+[wavedrom, target=enc-push, format=svg]
+....
+{reg: [{"bits": 5, "type": 1}, {"bits": 1, "name": "mode", "type": 4}, {"bits": 1, "name": "iffull", "type": 4}, {"bits": 1, "type": 1, "name": "0"}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "100"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 4 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+0+` | 7 | 1 | fixed: 0
+| `+iffull+` | 6 | 1 | 1 = `iffull` present
+| `+mode+` | 5 | 1 | code of value, see <<type-blocking,blocking>>
+| `+-+` | 4:0 | 5 | reserved, must be 0
+|===
+
+Example, `i2c_write.pio:28` (program `i2c_write`): `push side 1 [7]` -> `0x9f20`
+
+....
+  15    13      12      11    10    8   7     6       5     4    0
++----------+---------+------+---------+---+--------+------+--------+
+|  opcode  | side.en | side |  delay  | 0 | iffull | mode |   -    |
++----------+---------+------+---------+---+--------+------+--------+
+    100         1       1       111     0     0       1     00000
+....
+
+[[instr-pull]]
+=== `pull`
+
+Syntax: `+pull [ifempty], [mode]+` +
+Opcode 4 · status stable · modifiers: delay, side
+
+Load OSR from the TX FIFO. ifempty: do nothing unless the output count has reached the pull threshold. block (default): stall while the FIFO is empty; noblock: copy X into OSR instead. With autopull on, a pull is a no-op while OSR is full.
+
+....
+  15    13    12    8     7      6       5     4    0
++----------+------------+---+---------+------+--------+
+|  opcode  | delay/side | 1 | ifempty | mode |   -    |
++----------+------------+---+---------+------+--------+
+    100          5        1      1       1     00000
+....
+
+[wavedrom, target=enc-pull, format=svg]
+....
+{reg: [{"bits": 5, "type": 1}, {"bits": 1, "name": "mode", "type": 4}, {"bits": 1, "name": "ifempty", "type": 4}, {"bits": 1, "name": "1", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "100"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 4 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+1+` | 7 | 1 | fixed: 1
+| `+ifempty+` | 6 | 1 | 1 = `ifempty` present
+| `+mode+` | 5 | 1 | code of value, see <<type-blocking,blocking>>
+| `+-+` | 4:0 | 5 | reserved, must be 0
+|===
+
+Example, `i2c_write.pio:14` (program `i2c_write`): `pull` -> `0x80a0`
+
+....
+  15    13      12      11    10    8   7      6       5     4    0
++----------+---------+------+---------+---+---------+------+--------+
+|  opcode  | side.en | side |  delay  | 1 | ifempty | mode |   -    |
++----------+---------+------+---------+---+---------+------+--------+
+    100         0       0       000     1      0       1     00000
+....
+
+[[instr-mov]]
+=== `mov`
+
+Syntax: `+mov dst, src+` +
+Opcode 5 · status stable · modifiers: delay, side
+
+dst = op(src). op: ! or ~ inverts, :: bit-reverses. status is all ones while the selected FIFO's level is below N (`.sm_config status=`), else zero. mov isr/osr reset the matching shift count; exec runs the value as an instruction next cycle.
+
+....
+  15    13    12    8     7    5   4    3    2    0
++----------+------------+--------+--------+---------+
+|  opcode  | delay/side |  dst   | src.op | src.src |
++----------+------------+--------+--------+---------+
+    101          5          3        2         3
+....
+
+[wavedrom, target=enc-mov, format=svg]
+....
+{reg: [{"bits": 3, "name": "src.src", "type": 4}, {"bits": 2, "name": "src.op", "type": 4}, {"bits": 3, "name": "dst", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "101"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 5 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+dst+` | 7:5 | 3 | code of value, see <<type-mov_dst,mov_dst>>
+| `+src.op+` | 4:3 | 2 | code of `op` value, see <<type-mov_src,mov_src>>
+| `+src.src+` | 2:0 | 3 | code of `src` value, see <<type-mov_src,mov_src>>
+|===
+
+Example, `i2c_write.pio:17` (program `i2c_write`): `mov osr, ~osr` -> `0xa0ef`
+
+....
+  15    13      12      11    10    8   7    5   4    3    2    0
++----------+---------+------+---------+--------+--------+---------+
+|  opcode  | side.en | side |  delay  |  dst   | src.op | src.src |
++----------+---------+------+---------+--------+--------+---------+
+    101         0       0       000      111       01       111
+....
+
+[[instr-irq]]
+=== `irq`
+
+Syntax: `+irq [op], n, [rel]+` +
+Opcode 6 · status stable · modifiers: delay, side
+
+set / nowait: raise IRQ flag n. wait: raise it, then stall until something clears it. clear: lower it. rel adds the SM number modulo 4 to n's low two bits.
+
+....
+  15    13    12    8     7   6    5   4    0
++----------+------------+---+--------+--------+
+|  opcode  | delay/side | 0 |   op   |  idx   |
++----------+------------+---+--------+--------+
+    110          5        0     2        5
+....
+
+[wavedrom, target=enc-irq, format=svg]
+....
+{reg: [{"bits": 5, "name": "idx", "type": 4}, {"bits": 2, "name": "op", "type": 4}, {"bits": 1, "type": 1, "name": "0"}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "110"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 6 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+0+` | 7 | 1 | fixed: 0
+| `+op+` | 6:5 | 2 | code of value, see <<type-irq_op,irq_op>>
+| `+idx+` | 4:0 | 5 | unsigned integer 0..7
+|===
+
+Example, `uart_rx.pio:16` (program `uart_rx`): `irq 4 rel` -> `0xc014`
+
+....
+  15    13   12    8   7   6    5   4    0
++----------+---------+---+--------+--------+
+|  opcode  |  delay  | 0 |   op   |  idx   |
++----------+---------+---+--------+--------+
+    110       00000    0     00     10100
+....
+
+[[instr-set]]
+=== `set`
+
+Syntax: `+set dst, value+` +
+Opcode 7 · status stable · modifiers: delay, side
+
+Write a 5-bit immediate to X or Y (zero-extended), or to the SM's set pins / their directions.
+
+....
+  15    13    12    8     7    5   4    0
++----------+------------+--------+--------+
+|  opcode  | delay/side |  dst   | value  |
++----------+------------+--------+--------+
+    111          5          3        5
+....
+
+[wavedrom, target=enc-set, format=svg]
+....
+{reg: [{"bits": 5, "name": "value", "type": 4}, {"bits": 3, "name": "dst", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "111"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 7 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+dst+` | 7:5 | 3 | code of value, see <<type-set_dst,set_dst>>
+| `+value+` | 4:0 | 5 | unsigned integer 0..31
+|===
+
+Example, `i2c_write.pio:15` (program `i2c_write`): `set pindirs, 1 [7]` -> `0xe781`
+
+....
+  15    13      12      11    10    8   7    5   4    0
++----------+---------+------+---------+--------+--------+
+|  opcode  | side.en | side |  delay  |  dst   | value  |
++----------+---------+------+---------+--------+--------+
+    111         0       0       111      100     00001
+....
+
+[[instr-nop]]
+=== `nop`
+
+Syntax: `+nop+` +
+Opcode 5 · status stable · modifiers: delay, side
+
+Assembles to `mov y, y`: no effect beyond side-set and delay.
+
+....
+  15    13    12    8      7    0
++----------+------------+----------+
+|  opcode  | delay/side | mov y, y |
++----------+------------+----------+
+    101          5        01000010
+....
+
+[wavedrom, target=enc-nop, format=svg]
+....
+{reg: [{"bits": 8, "name": "mov y, y", "type": 4}, {"bits": 5, "name": "delay/side", "type": 3}, {"bits": 3, "name": "opcode", "type": 2, "attr": "101"}], config: {"bits": 16, "lanes": 1, "hspace": 900}}
+....
+
+[cols="2,1,1,6",options="header"]
+|===
+| Slot | Bits | Width | Encoding
+| `+opcode+` | 15:13 | 3 | opcode 5 (see <<opcode-map>>)
+| `+delay/side+` | 12:8 | 5 | side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left; the split is set by the program's `.side_set`
+| `+mov y, y+` | 7:0 | 8 | fixed: 01000010
+|===
+
+Example, `i2c_write.pio:21` (program `i2c_write`): `nop side 0 [7]` -> `0xb742`
+
+....
+  15    13      12      11    10    8    7    0
++----------+---------+------+---------+----------+
+|  opcode  | side.en | side |  delay  | mov y, y |
++----------+---------+------+---------+----------+
+    101         1       0       111     01000010
+....
+
+== Code tables
+
+[[conditions]]
+=== Conditions
+
+The condition code is 3 bits; conditions with an argument carry it in the following `cond.arg` bits.
+
+[cols="1,2,2,5",options="header"]
+|===
+| Code | Condition | Argument | Meaning
+| 0 | `+always+` |  | Always (no condition written).
+| 1 | `+!x+` |  | X is zero.
+| 2 | `+x--+` |  | X is non-zero before the decrement; X is decremented either way.
+| 3 | `+!y+` |  | Y is zero.
+| 4 | `+y--+` |  | Y is non-zero before the decrement; Y is decremented either way.
+| 5 | `+x!=y+` |  | X differs from Y.
+| 6 | `+pin+` |  | The SM's jump pin (`.sm_config jmp=`) is high.
+| 7 | `+!osre+` |  | OSR is not empty: its shift count is below the pull threshold.
+|===
+
+[[type-blocking]]
+=== `blocking`
+
+1 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 1 | `1` | `+block+`
+| 0 | `0` | `+noblock+`
+|===
+
+[[type-in_src]]
+=== `in_src`
+
+3 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `000` | `+pins+`
+| 1 | `001` | `+x+`
+| 2 | `010` | `+y+`
+| 3 | `011` | `+null+`
+| 6 | `110` | `+isr+`
+| 7 | `111` | `+osr+`
+|===
+
+[[type-irq_op]]
+=== `irq_op`
+
+2 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `00` | `+set+`
+| 0 | `00` | `+nowait+`
+| 1 | `01` | `+wait+`
+| 2 | `10` | `+clear+`
+|===
+
+[[type-mov_dst]]
+=== `mov_dst`
+
+3 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `000` | `+pins+`
+| 1 | `001` | `+x+`
+| 2 | `010` | `+y+`
+| 4 | `100` | `+exec+`
+| 5 | `101` | `+pc+`
+| 6 | `110` | `+isr+`
+| 7 | `111` | `+osr+`
+|===
+
+[[type-mov_src]]
+=== `mov_src`
+
+`op` (2 bits)
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `00` | `+none+`
+| 1 | `01` | `+!+`
+| 1 | `01` | `+~+`
+| 2 | `10` | `+::+`
+|===
+
+`src` (3 bits)
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `000` | `+pins+`
+| 1 | `001` | `+x+`
+| 2 | `010` | `+y+`
+| 3 | `011` | `+null+`
+| 5 | `101` | `+status+`
+| 6 | `110` | `+isr+`
+| 7 | `111` | `+osr+`
+|===
+
+[[type-out_dst]]
+=== `out_dst`
+
+3 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `000` | `+pins+`
+| 1 | `001` | `+x+`
+| 2 | `010` | `+y+`
+| 3 | `011` | `+null+`
+| 4 | `100` | `+pindirs+`
+| 5 | `101` | `+pc+`
+| 6 | `110` | `+isr+`
+| 7 | `111` | `+exec+`
+|===
+
+[[type-pol]]
+=== `pol`
+
+1 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `0` | `+0+`
+| 1 | `1` | `+1+`
+|===
+
+[[type-set_dst]]
+=== `set_dst`
+
+3 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `000` | `+pins+`
+| 1 | `001` | `+x+`
+| 2 | `010` | `+y+`
+| 4 | `100` | `+pindirs+`
+|===
+
+[[type-wait_src]]
+=== `wait_src`
+
+2 bits
+
+[cols="1,1,3",options="header"]
+|===
+| Code | Binary | Value
+| 0 | `00` | `+gpio+`
+| 1 | `01` | `+pin+`
+| 2 | `10` | `+irq+`
+|===
+
+== Notes
+
+* *Overflow:* none, every instruction fits in 16 bits.
+* *`operand` field is full* for: `jmp`, `wait`, `in`, `out`, `mov`, `irq`, `set`, `nop`.
+* *Headroom* (bits left in the most tightly packed instruction): `operand` 0 of 8.
+* *Opcodes:* 0 of 8 free.
+* This is the RP2040 format, so it is fixed: words match pioasm (tests: sim/packs/pio/tests/test_encode.py).
+* An instruction memory of 32 words is shared by the block's four state machines; `jmp` targets are 5-bit absolute addresses.

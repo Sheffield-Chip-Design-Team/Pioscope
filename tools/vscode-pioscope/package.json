@@ -1,0 +1,104 @@
+{
+  "name": "pioscope-asm",
+  "displayName": "PIOScope assembly",
+  "description": "Syntax highlighting for the ISA packs' assembly and a step debugger for their engine models",
+  "version": "0.1.0",
+  "publisher": "James Ashie Kotey, SHaRC",
+  "license": "Apache-2.0",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Debuggers", "Programming Languages"],
+  "main": "./extension.js",
+  "activationEvents": ["onDebugResolve:pioscope", "onDebugInitialConfigurations", "onLanguage:pioscope-asm"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "pioscope-asm",
+        "aliases": ["PIOScope assembly", "pioscope-asm"],
+        "extensions": [".pio"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      { "language": "pioscope-asm", "scopeName": "source.pioscope-asm", "path": "./pioscope.tmLanguage.json" }
+    ],
+    "breakpoints": [{ "language": "pioscope-asm" }],
+    "configuration": {
+      "title": "PIOScope",
+      "properties": {
+        "pioscope.adapterCommand": {
+          "type": "string",
+          "default": "uv",
+          "description": "Command that starts the debug adapter (give an absolute path if uv is not on the PATH VS Code sees, e.g. ~/.local/bin/uv)."
+        },
+        "pioscope.adapterArgs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["run", "pioscope", "dap"],
+          "description": "Arguments for pioscope.adapterCommand."
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "pioscope",
+        "label": "PIOScope engine model",
+        "languages": ["pioscope-asm"],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "program": { "type": "string", "description": "Program source (any ISA pack's suffix) or image JSON to run on its engine model.", "default": "${file}" },
+              "scenario": { "type": "string", "description": "Instead of program: a bench scenario factory, module:function (e.g. sim.packs.pio.tests.scenarios:uart_rx)." },
+              "devices": { "type": "array", "items": { "enum": ["uart_partner", "spi_slave", "i2c_slave"] }, "description": "Bus partners attached to the program's pins.", "default": ["uart_partner"] },
+              "hostTx": { "type": ["array", "string"], "description": "Words the host pushes into the TX FIFO, e.g. [\"0x41\", \"0x42\"]." },
+              "uartSend": { "type": ["array", "string"], "description": "Bytes the UART partner transmits to the engine." },
+              "baud": { "type": "number", "description": "UART partner baud rate (default: the program's timing config, where its ISA has one)." },
+              "ppm": { "type": "number", "description": "UART partner clock error in ppm.", "default": 0 },
+              "cycles": { "type": "number", "description": "Maximum sysclk cycles to run.", "default": 100000 },
+              "stopOnEntry": { "type": "boolean", "description": "Stop before the first instruction.", "default": true },
+              "dut": { "type": "string", "description": "The model to debug: engine (default: the program's ISA pack's model) or package.module:callable, e.g. an Engine subclass with more cores. Threads, scopes and VCD groups follow the model.", "default": "engine" },
+              "vcd": { "type": "string", "description": "VCD file rewritten with the waveform so far (bench nets + engine probes) at every stop; open it in GTKWave or Surfer and reload.", "default": "${workspaceFolder}/build/debug.vcd" },
+              "trace": { "type": "boolean", "description": "Print every engine and bench event in the Debug Console while running.", "default": false },
+              "cwd": { "type": "string", "description": "The PIOScope project directory (holding pyproject.toml). Default: found from the program's path." }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "pioscope",
+            "request": "launch",
+            "name": "Debug current program",
+            "program": "${file}",
+            "devices": ["uart_partner"],
+            "hostTx": ["0x55", "0xA3"],
+            "uartSend": ["0x55", "0xA3"],
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "PIOScope: debug a program",
+            "body": {
+              "type": "pioscope",
+              "request": "launch",
+              "name": "Debug ${1:program}",
+              "program": "^\"\\${file}\"",
+              "devices": ["uart_partner"],
+              "hostTx": ["0x55"],
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "PIOScope: debug a bench scenario",
+            "body": {
+              "type": "pioscope",
+              "request": "launch",
+              "name": "Debug ${1:scenario}",
+              "scenario": "${2:sim.packs.pio.tests.scenarios:uart_rx}",
+              "stopOnEntry": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

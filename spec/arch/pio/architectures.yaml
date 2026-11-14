@@ -1,0 +1,42 @@
+# Hand-picked PIO-block architectures for the per-workload table of the study
+# (docs/arch-guide.md). The sweep in the report also derives the smallest
+# configuration of each family that fits every workload.
+#
+# pio:  num_cores state machines. imem_shared: false -> imem_words per SM;
+#       true -> imem_words in total, shared by all SMs (the RP2040: 32 words, 4 SMs).
+# mesh: pools of cores, imem banks and FIFOs, assigned by software at load time.
+#       cluster: null -> full crossbar; k -> clusters of k cores, each with an equal
+#       share of every pool, wired only inside the cluster.
+
+architectures:
+  - name: rp2040_block
+    family: pio
+    num_cores: 4
+    imem_words: 32
+    imem_shared: true
+    units: []
+
+  - name: pio4_private32
+    family: pio
+    num_cores: 4
+    imem_words: 32
+    imem_shared: false
+    units: []
+
+  - name: mesh4_full
+    family: mesh
+    cores: 4
+    banks: 12
+    bank_words: 4
+    units: {}
+    fifos: 8
+    cluster: null
+
+  - name: mesh4_c2
+    family: mesh
+    cores: 4
+    banks: 12
+    bank_words: 4
+    units: {}
+    fifos: 8
+    cluster: 2

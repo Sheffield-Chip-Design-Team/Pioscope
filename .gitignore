@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+sim_build/
+build/
+test/results.xml
+test/*.fst
+test/*.vcd
+
+# VS Code extension package (built by tools/vscode-pioscope/build.py)
+tools/vscode-pioscope/*.vsix
+.vscode/launch.json

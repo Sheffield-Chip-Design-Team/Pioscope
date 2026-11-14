@@ -1,0 +1,10 @@
+; SPI master, mode 3 (CPOL=1, CPHA=1), MSB first, 8-bit frames. See spi_m0.pio.
+.program spi_m3
+.pins      sck=uo1 mosi=uo2 miso=ui0
+.side_set  1
+.sm_config out=mosi in=miso sideset=sck out_shift=left in_shift=left autopull=8 autopush=8 high=sck
+.clkdiv    4
+
+        out  x, 1       side 1       ; next bit
+        mov  pins, x    side 0 [1]   ; data out on the leading (falling) edge
+        in   pins, 1    side 1       ; sample on the trailing (rising) edge

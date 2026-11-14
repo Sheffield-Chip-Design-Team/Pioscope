@@ -1,0 +1,21 @@
+; WS2812 ("NeoPixel") LED data: one bit is T1 + T2 + T3 = 10 SM cycles. A 1 is
+; high for T1 + T2, a 0 for T1 only. The host pushes GRB colours left-justified
+; (24 bits << 8); autopull at 24 bits. At 800 kbit/s the SM runs at 8 MHz.
+.program ws2812
+.pins      din=uo0
+.side_set  1
+.sm_config out=din sideset=din out_shift=left autopull=24
+.clkdiv    6.25
+.define    T1 2
+.define    T2 5
+.define    T3 3
+
+.wrap_target
+bitloop:
+        out  x, 1       side 0 [T3 - 1]   ; low between bits; next bit
+        jmp  !x do_zero side 1 [T1 - 1]   ; every bit starts high
+do_one:
+        jmp  bitloop    side 1 [T2 - 1]   ; a 1 stays high
+do_zero:
+        nop             side 0 [T2 - 1]   ; a 0 goes low
+.wrap

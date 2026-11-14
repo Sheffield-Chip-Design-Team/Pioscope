@@ -1,0 +1,11 @@
+; blink: toggle one pin forever. No host, no FIFOs. (tutorial 01)
+; The state machine runs at 50 MHz / 25 = 2 MHz. Each `set` takes 1 cycle + 7 delay
+; cycles = 8 SM cycles, so the pin is high for 8 and low for 8:
+; a period of 16 x 25 = 400 sysclk cycles = 8 us (125 kHz).
+.program blink
+.pins     led=uo0
+.clkdiv   25
+.wrap_target
+          set  pins, 1  [7]    ; led high
+          set  pins, 0  [7]    ; led low
+.wrap                          ; jump back to .wrap_target at no cost
