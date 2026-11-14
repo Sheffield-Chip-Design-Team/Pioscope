@@ -3,9 +3,9 @@
 #
 # Syntax follows pioasm (the Pico SDK assembler) for the nine instructions, side-set
 # and delay. The binary encoding is the exact RP2040 16-bit format, produced by the
-# pack's encoder (sim/packs/pio/encode.py), so words match pioasm output.
+# pack's encoder (pioscope/packs/pio/encode.py), so words match pioasm output.
 #
-# The engine model (sim/dut/pio) implements the semantics below for one state machine
+# The engine model (pioscope/dut/pio) implements the semantics below for one state machine
 # (SM) of a PIO block. Things the Pico SDK configures from C (pin bases, shift
 # directions, autopush/autopull, FIFO join, clock divider) are harness directives here:
 # `.pins`, `.sm_config` and `.clkdiv`. pioasm does not have them (see `harness: true`).
@@ -27,8 +27,8 @@ name: RP2040 PIO
 pack: pio
 
 hooks:
-  directives: sim.packs.pio.directives   # .side_set (5-bit delay/side field), .sm_config
-  encoder: sim.packs.pio.encode          # the RP2040 16-bit instruction format
+  directives: pioscope.packs.pio.directives   # .side_set (5-bit delay/side field), .sm_config
+  encoder: pioscope.packs.pio.encode          # the RP2040 16-bit instruction format
 
 params:
   imem_size: 32          # instruction memory shared by the block's four SMs
@@ -135,7 +135,7 @@ encoding:
     delay_side: "side-set bits (MSB first, under an enable bit with `.side_set n opt`), then the `[n]` delay in the bits left"
     operand: "the instruction's arguments"
   notes:
-    - "This is the RP2040 format, so it is fixed: words match pioasm (tests: sim/packs/pio/tests/test_encode.py)."
+    - "This is the RP2040 format, so it is fixed: words match pioasm (tests: pioscope/packs/pio/tests/test_encode.py)."
     - "An instruction memory of 32 words is shared by the block's four state machines; `jmp` targets are 5-bit absolute addresses."
 
 instructions:

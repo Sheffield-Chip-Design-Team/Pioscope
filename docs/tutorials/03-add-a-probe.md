@@ -10,11 +10,11 @@ The tools show whatever the model reports:
 
 `Core.issued` already counts issued instructions, and it is in `state()`, so the debugger shows it under *Core sm0*. It is not in the VCD. Add it:
 
-1. In `sim/dut/core/core.py` (the core every model builds on), in `probes()`, add `"issued": self.issued & 0xFFFF,` to the dict.
+1. In `pioscope/dut/core/core.py` (the core every model builds on), in `probes()`, add `"issued": self.issued & 0xFFFF,` to the dict.
 2. In the class's `PROBE_BITS`, add `"issued": 16`.
 3. Run:
    ```bash
-   uv run pioscope sim --scenario sim.examples.pulse_counter:blink_scenario --dut engine --vcd build/b.vcd
+   uv run pioscope sim --scenario pioscope.examples.pulse_counter:blink_scenario --dut engine --vcd build/b.vcd
    gtkwave build/b.vcd &
    ```
    `engine.sm0.issued` is there. Right-click it → Data Format → Analog → Step to see it as a staircase.

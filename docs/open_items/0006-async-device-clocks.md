@@ -6,7 +6,7 @@ Status: accepted (2026-11-10)
 The engine is a single-sysclk synchronous design, and every external signal enters through input flops. Rounding device edges to sysclk is therefore physically right. But the bench used to fix where an edge fell relative to the sampling edge, and it never resolved near-edge inputs either way. It also only allowed partner clocks that are whole-number fractions of sysclk. Those effects decide whether UART RX sample points, SPI-slave oversampling and CDR claims hold.
 
 ## Decision
-- **Device clocks.** A device can run on its own `DeviceClock(freq_hz, ppm, offset_s, jitter_rms_s, seed)` (`sim/devices/clock.py`).
+- **Device clocks.** A device can run on its own `DeviceClock(freq_hz, ppm, offset_s, jitter_rms_s, seed)` (`pioscope/devices/clock.py`).
   - Jitter is per-edge, non-cumulative, Gaussian, clamped to ±3σ, and a pure function of `(seed, n)`.
   - Users so far: `UartPartner` (always: tick n is bit boundary n; `UartConfig.offset_s` and `jitter_rms_s`), `SpiMaster(sck_hz=…)` and `I2cMaster(scl_hz=…)`.
   - Slaves stay reactive.
@@ -25,6 +25,6 @@ The engine is a single-sysclk synchronous design, and every external signal ente
 - Device-side sampling (a partner reading DUT outputs) is ideal, at the cycle containing the partner's sample instant.
 
 ## Consequences
-- With aperture 0 and untimed drives, results are bit-identical to before (`sim/tests/bench/test_async.py::test_synchronous_runs_are_bit_identical_to_before`).
+- With aperture 0 and untimed drives, results are bit-identical to before (`pioscope/tests/bench/test_async.py::test_synchronous_runs_are_bit_identical_to_before`).
 - `UartPartner` TX edges now land at their exact times instead of the nearest cycle. Some UART waveforms moved by under one cycle; decoded data is unchanged.
 - A UART RX tolerance sweep (ppm × 8 phases × jitter × window) becomes the "tolerated baud error" metric of an RX program on an engine model.

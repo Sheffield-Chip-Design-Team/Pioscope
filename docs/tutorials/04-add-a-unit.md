@@ -1,6 +1,6 @@
 # Tutorial 04: add a unit
 
-**You will:** write a hardware unit, attach it to a core of the PIO model, and debug it, without editing the engine core or the tools. **Code:** [`sim/examples/edge_counter.py`](../../sim/examples/edge_counter.py).
+**You will:** write a hardware unit, attach it to a core of the PIO model, and debug it, without editing the engine core or the tools. **Code:** [`pioscope/examples/edge_counter.py`](../../sim/examples/edge_counter.py).
 
 ## The unit interface
 
@@ -29,15 +29,15 @@ class EdgeCountingEngine(PioEngine):
 ## Run it
 
 ```bash
-uv run pioscope debug --scenario sim.examples.pulse_counter:blink_scenario \
-    --dut sim.examples.edge_counter:EdgeCountingEngine --vcd build/edges.vcd
+uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario \
+    --dut pioscope.examples.edge_counter:EdgeCountingEngine --vcd build/edges.vcd
 (kdb) stepi 1000
 (kdb) info units edge_counter      # edges=5
 (kdb) watch units.edge_counter.edges
 (kdb) continue                     # stops at the next edge
 ```
 
-In VS Code, add `"dut": "sim.examples.edge_counter:EdgeCountingEngine"` to the Blink configuration from tutorial 01. Open Variables → Units → edge_counter. In GTKWave, the unit has its own sub-group under sm0.
+In VS Code, add `"dut": "pioscope.examples.edge_counter:EdgeCountingEngine"` to the Blink configuration from tutorial 01. Open Variables → Units → edge_counter. In GTKWave, the unit has its own sub-group under sm0.
 
 ## A unit that instructions use
 

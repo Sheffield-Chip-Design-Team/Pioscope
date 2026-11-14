@@ -16,7 +16,7 @@ That made it impossible to:
 - reuse the framework without carrying one particular ISA along.
 
 ## Decision
-1. An **ISA pack** bundles everything that belongs to one instruction set. A pack is a sub-package of `sim.packs` that defines `PACK = IsaPack(...)`:
+1. An **ISA pack** bundles everything that belongs to one instruction set. A pack is a sub-package of `pioscope.packs` that defines `PACK = IsaPack(...)`:
    - **spec:** `spec/isa/<pack>.yaml`, the single source of truth for that ISA (CLAUDE.md §8 #1).
    - **model:** the engine model (`module:callable`), which is what `--dut engine` builds.
    - **demand:** the arch-study hooks (`units_used`, `bit_shares`, `fifos`).
@@ -30,10 +30,10 @@ That made it impossible to:
      encoder: <module>      # encode_image / decode_word / instr_layout; default: generic fields
    ```
    With a custom encoder, several instructions may share a major opcode.
-3. The generic directive handlers live in `sim.asm.directives` (`GENERIC`). Those are `.program`, `.pins`, `.side_set`, `.fifo`, `.clkdiv`, `.wrap_target`, `.wrap` and `.define`. A pack adds handlers or overrides them.
+3. The generic directive handlers live in `pioscope.asm.directives` (`GENERIC`). Those are `.program`, `.pins`, `.side_set`, `.fifo`, `.clkdiv`, `.wrap_target`, `.wrap` and `.define`. A pack adds handlers or overrides them.
 4. Names usable without a defining directive are declared generically as `builtin_refs: {<table>: [names]}`.
-5. **The active pack** is `$PIOSCOPE_ISA` if set, otherwise the discovered pack with the lowest `rank`. Tools and tests that need a particular pack use `sim.packs.use(name)`, and the CLI uses `--isa`. Each pack's tests live with the pack and pin it, so one `pytest` run covers every pack.
-6. **Engine models** share a generic core (`sim.dut.core`): registers, FIFOs, pins, side-set, delay, wrap, the clock divider, handler dispatch, trace, probes and `state()`, the `Unit` base and the observability contract (ADR-0010). Each pack's model subclasses that core and adds its own handlers and units.
+5. **The active pack** is `$PIOSCOPE_ISA` if set, otherwise the discovered pack with the lowest `rank`. Tools and tests that need a particular pack use `pioscope.packs.use(name)`, and the CLI uses `--isa`. Each pack's tests live with the pack and pin it, so one `pytest` run covers every pack.
+6. **Engine models** share a generic core (`pioscope.dut.core`): registers, FIFOs, pins, side-set, delay, wrap, the clock divider, handler dispatch, trace, probes and `state()`, the `Unit` base and the observability contract (ADR-0010). Each pack's model subclasses that core and adds its own handlers and units.
 
 ## Consequences
 - A new ISA is a new pack. None of the framework's code changes.

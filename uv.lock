@@ -384,7 +384,7 @@ wheels = [
 ]
 
 [[package]]
-name = "pioscope-sim"
+name = "pioscope"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

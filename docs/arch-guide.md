@@ -4,7 +4,7 @@
 
 **What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`spec/arch/pio/`) as of 2026-11-14.
 
-Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `sim/arch/`.
+Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `pioscope/arch/`.
 
 ---
 
@@ -76,7 +76,7 @@ Everything below applies to both cases.
 
 ## 3. Architecture families
 
-The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `sim/arch/arch.py` and `minimal()` in `sim/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
+The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `pioscope/arch/arch.py` and `minimal()` in `pioscope/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
 
 ### 3.1 PIO-style: `pio_full` and `pio_lean`
 
@@ -140,7 +140,7 @@ The study compares five **families**. Each is sized to the smallest configuratio
 
 ## 4. Allocation: the "higher-level software"
 
-Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `sim/arch/allocate.py`.
+Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `pioscope/arch/allocate.py`.
 
 - **PIO** (`allocate_pio`): program *i* goes on core *i*. It fails if there are more programs than cores, or if a program needs a unit, more imem words or a deeper FIFO than a core has. With shared imem, it also fails when the programs together need more words than the memory has.
 - **Mesh** (`allocate_mesh`): each program's demand must fit inside one cluster's remaining capacity: 1 core, ⌈words / bank_words⌉ banks, its FIFOs, and one of each unit it uses. This is a small **bin-packing** problem. There are two allocators:
@@ -185,7 +185,7 @@ Two kinds of number appear throughout:
 
 ## 6. The area model
 
-The code is `area()` in `sim/arch/cost.py`. Notation:
+The code is `area()` in `pioscope/arch/cost.py`. Notation:
 - W = words;
 - b = bits per instruction word (`word_bits`), d = bits per FIFO entry (`fifo_bits`);
 - f = flop bit (7.25 GE), m = mux bit (2.5 GE);

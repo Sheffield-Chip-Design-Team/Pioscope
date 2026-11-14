@@ -39,19 +39,19 @@ Then, in VS Code, run **Developer: Reload Window** (Ctrl+Shift+P). If VS Code ca
 ## 1. Trace events
 
 ```bash
-uv run pioscope sim sim/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
+uv run pioscope sim pioscope/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
     --baud 115200 --uart-send 0x55 --trace --source sm0 --source uart_partner
-uv run pioscope sim --scenario sim.packs.pio.tests.scenarios:uart_tx --dut engine --trace
+uv run pioscope sim --scenario pioscope.packs.pio.tests.scenarios:uart_tx --dut engine --trace
 ```
 
 `pioscope sim` and `pioscope debug` accept source (assembled on the fly) or image JSON. Each line shows the exact time, the cycle, the **source** and the event:
 
 ```
              time       cycle  source        event       data
-        1.0800 us  @       54  sm0           exec        pc=0 op=wait 0 pin 0 src=sim/packs/pio/programs/uart_rx.pio:10
+        1.0800 us  @       54  sm0           exec        pc=0 op=wait 0 pin 0 src=pioscope/packs/pio/programs/uart_rx.pio:10
         1.0800 us  @       54  sm0           stall       pc=0 reason=wait 0 pin 0
        17.3611 us  @      868  uart_partner  sent        value=0x55 parity_error=False framing_error=False break_bits=0
-       19.5200 us  @      976  sm0           exec        pc=1 op=set x, 7 [10] src=sim/packs/pio/programs/uart_rx.pio:11
+       19.5200 us  @      976  sm0           exec        pc=1 op=set x, 7 [10] src=pioscope/packs/pio/programs/uart_rx.pio:11
 ```
 
 The sources are:
@@ -107,9 +107,9 @@ gtkwave build/x.vcd build/x.gtkw &
 For a `pioscope sim` run you can make the save file yourself:
 
 ```python
-from sim.bench.backends.python import run_python
-from sim.dut.pio import PioEngine
-from sim.packs.pio.tests.scenarios import uart_tx
+from pioscope.bench.backends.python import run_python
+from pioscope.dut.pio import PioEngine
+from pioscope.packs.pio.tests.scenarios import uart_tx
 r = run_python(uart_tx(payload=(0x41,)), PioEngine())
 r.waveform.to_vcd("build/tx.vcd"); r.waveform.to_gtkw("build/tx.gtkw", "build/tx.vcd")
 ```
@@ -127,10 +127,10 @@ r.waveform.to_vcd("build/tx.vcd"); r.waveform.to_gtkw("build/tx.gtkw", "build/tx
 ## 3. The terminal debugger: `pioscope debug`
 
 ```bash
-uv run pioscope debug sim/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 \
+uv run pioscope debug pioscope/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 \
     --uart-send 0x55,0xA3
-uv run pioscope debug --scenario sim.packs.pio.tests.scenarios:uart_rx --vcd build/rx.vcd
-uv run pioscope debug sim/packs/pio/programs/uart_tx.pio --device uart_partner --baud 115200 \
+uv run pioscope debug --scenario pioscope.packs.pio.tests.scenarios:uart_rx --vcd build/rx.vcd
+uv run pioscope debug pioscope/packs/pio/programs/uart_tx.pio --device uart_partner --baud 115200 \
     --host-tx 0x41 --dut mypackage.mymodel:MyEngine     # debug your own model
 ```
 
@@ -142,9 +142,9 @@ A short session:
 
 ```
 (kdb) break bitloop
-Breakpoint 1 at pc=2: file sim/packs/pio/programs/uart_rx.pio, line 13.
+Breakpoint 1 at pc=2: file pioscope/packs/pio/programs/uart_rx.pio, line 13.
 (kdb) continue
-Breakpoint 1, bitloop () at sim/packs/pio/programs/uart_rx.pio:13
+Breakpoint 1, bitloop () at pioscope/packs/pio/programs/uart_rx.pio:13
   13            in   pins, 1                 ; sample a data bit
 (kdb) x/4i 0
    start:
@@ -154,7 +154,7 @@ Breakpoint 1, bitloop () at sim/packs/pio/programs/uart_rx.pio:13
 =>B   2  in pins, 1                       ; uart_rx.pio:13
       3  jmp x-- bitloop [6]              ; uart_rx.pio:14
 (kdb) finish
-[cycle 1627] pc=3 at sim/packs/pio/programs/uart_rx.pio:14
+[cycle 1627] pc=3 at pioscope/packs/pio/programs/uart_rx.pio:14
 (kdb) p/x isr
 $ = 0x80000000
 (kdb) info shared
@@ -197,10 +197,10 @@ irq: flags=0b00000000
 4. a path from the selected core: `regs.x`, `fifo.tx.level`, `pins.in.rx`, `config.out_shift`;
 5. a bare name that occurs once in the selected core's state: `x`, `isr`, `pc`. An ambiguous name lists the full paths to choose from.
 
-**Scripting:** `-ex CMD` (repeatable) and `--commands FILE` run commands at start, and `--batch` exits after them. The tests use this (`sim/packs/pio/tests/test_debug.py`):
+**Scripting:** `-ex CMD` (repeatable) and `--commands FILE` run commands at start, and `--batch` exits after them. The tests use this (`pioscope/packs/pio/tests/test_debug.py`):
 
 ```bash
-uv run pioscope debug sim/packs/pio/programs/uart_tx.pio --device uart_partner --baud 115200 \
+uv run pioscope debug pioscope/packs/pio/programs/uart_tx.pio --device uart_partner --baud 115200 \
     --host-tx 0x41 --batch -ex "break 13" -ex c -ex "p/x osr"
 ```
 
@@ -285,10 +285,10 @@ The debugger, the trace and the VCD need only the **observability contract** (AD
 
 So:
 - **To add a register or a field:** put it in the core's `state()` (and in `probes()` if it is an integer you want in the VCD).
-- **To add a unit:** subclass `sim.dut.core.Unit` and append an instance to `core.units`.
+- **To add a unit:** subclass `pioscope.dut.core.Unit` and append an instance to `core.units`.
 - **To add a core or a shared unit:** subclass the engine and override `build()` to fill `self.cores` and `self.shared`. Then debug it with `--dut package.module:MyEngine` (or `"dut"` in `launch.json`).
 
-`sim/packs/pio/tests/test_debug.py` proves this with a two-SM model that exists only in the test.
+`pioscope/packs/pio/tests/test_debug.py` proves this with a two-SM model that exists only in the test.
 
 ---
 
@@ -316,7 +316,7 @@ So:
 
 The debugger and the waveforms are also the instruments for architecture work:
 
-- **Measure real activity.** The architecture study (`sim/arch`, `docs/arch-guide.md`) estimates activity from a `load` number. A unit's probes (busy, bits fed) give measured busy cycles per protocol and per bit; feed those back into the pack's `workloads.yaml`.
+- **Measure real activity.** The architecture study (`pioscope/arch`, `docs/arch-guide.md`) estimates activity from a `load` number. A unit's probes (busy, bits fed) give measured busy cycles per protocol and per bit; feed those back into the pack's `workloads.yaml`.
 - **Contention under load.** Model a pooled unit as a shared `Unit` with an arbiter. Run several protocol programs on several cores and plot `grant`/`stall`. Count stalled cycles and missed bit deadlines as the load rises; the trace gives exact times.
 - **Runtime reconfiguration.** Model the controller as a shared unit that swaps programs or unit configurations. Step through a swap in the debugger and check in the waveform that no bit on the bus was disturbed.
 - **Model vs RTL.** The same scenario runs on the Python model (`pioscope sim`) and on RTL through cocotb (`pioscope rtl --vcd`). Diff the two VCDs' bus nets: any difference is a bug in one of them.

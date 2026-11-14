@@ -647,5 +647,5 @@ The condition code is 3 bits; conditions with an argument carry it in the follow
 * *`operand` field is full* for: `jmp`, `wait`, `in`, `out`, `mov`, `irq`, `set`, `nop`.
 * *Headroom* (bits left in the most tightly packed instruction): `operand` 0 of 8.
 * *Opcodes:* 0 of 8 free.
-* This is the RP2040 format, so it is fixed: words match pioasm (tests: sim/packs/pio/tests/test_encode.py).
+* This is the RP2040 format, so it is fixed: words match pioasm (tests: pioscope/packs/pio/tests/test_encode.py).
 * An instruction memory of 32 words is shared by the block's four state machines; `jmp` targets are 5-bit absolute addresses.

@@ -30,8 +30,8 @@ def _alt(words: list[str]) -> str:
 
 def _isas() -> list[object]:
     sys.path.insert(0, str(ROOT))
-    from sim.isa import load_isa
-    from sim.packs import packs
+    from pioscope.isa import load_isa
+    from pioscope.packs import packs
 
     return [load_isa(p.spec) for p in packs().values()]
 
@@ -98,7 +98,7 @@ def grammar() -> dict[str, object]:
 
 def source_extensions() -> list[str]:
     sys.path.insert(0, str(ROOT))
-    from sim.packs import packs
+    from pioscope.packs import packs
 
     return sorted({p.ext for p in packs().values()})
 

@@ -1,5 +1,5 @@
 // PIOScope assembly: registers the `pioscope` debug type, whose adapter is `uv run pioscope dap`
-// (sim/debug/dap.py) run in the PIOScope project directory. Plain JS, no dependencies.
+// (pioscope/debug/dap.py) run in the PIOScope project directory. Plain JS, no dependencies.
 "use strict";
 const vscode = require("vscode");
 const fs = require("fs");

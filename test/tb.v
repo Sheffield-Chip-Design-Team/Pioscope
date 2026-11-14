@@ -14,7 +14,7 @@ module tb ();
   // end
 
   // Backdoor program loader (docs/open_items/0004-backdoor-loader.md).
-  // +PROG=<file> is a $readmemh image written by sim.bench.loader.MemFileLoader.
+  // +PROG=<file> is a $readmemh image written by pioscope.bench.loader.MemFileLoader.
   // Once the engine RTL exists, compile with -DPE_IMEM_PATH=<hierarchical path
   // to its instruction memory array>. +CFG=<file> is reserved (JSON for now).
   reg [8*1024-1:0] pioscope_prog_path;

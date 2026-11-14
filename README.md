@@ -37,10 +37,10 @@ An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs
 ```bash
 uv sync && uv run pytest                      # environment + test suite
 uv run pioscope --help                          # asm, sim, debug, dap, rtl, metrics, isa-docs, arch
-uv run pioscope asm sim/packs/pio/programs/uart_tx.pio --listing build/uart_tx.lst
-uv run pioscope sim sim/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
+uv run pioscope asm pioscope/packs/pio/programs/uart_tx.pio --listing build/uart_tx.lst
+uv run pioscope sim pioscope/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
     --baud 115200 --uart-send 0x55 --trace --vcd build/rx.vcd
-uv run pioscope debug sim/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 \
+uv run pioscope debug pioscope/packs/pio/programs/uart_rx.pio --device uart_partner --baud 115200 \
     --uart-send 0x55
 gtkwave build/rx.vcd &
 ```
@@ -54,7 +54,7 @@ VS Code: build and install the extension once (`uv run python tools/vscode-piosc
 Copy the PIO pack's structure ([isa-flow.md §5](docs/reference/isa-flow.md#5-adding-an-isa-pack)):
 1. write a yaml spec;
 2. add directive or encoder hooks only where yaml can't say it;
-3. build an engine model on `sim.dut.core`;
+3. build an engine model on `pioscope.dut.core`;
 4. write programs and tests.
 
 The assembler, bench, debugger, waveforms, VS Code highlighting and arch study then work for it unchanged.
@@ -62,7 +62,7 @@ The assembler, bench, debugger, waveforms, VS Code highlighting and arch study t
 ## Contributing
 
 1. Branch from `main`: `git switch -c <area>/<topic>`.
-2. Make small commits. Keep `uv run pytest`, `uv run ruff check sim` and `uv run mypy` clean, and regenerate generated files (`pioscope isa-docs`, `pioscope arch --write`, `pytest --update-golden`) instead of hand-editing them.
+2. Make small commits. Keep `uv run pytest`, `uv run ruff check pioscope` and `uv run mypy` clean, and regenerate generated files (`pioscope isa-docs`, `pioscope arch --write`, `pytest --update-golden`) instead of hand-editing them.
 3. Open a pull request. ISA changes need an ADR first ([isa-flow.md §4](docs/reference/isa-flow.md#4-checklists)). The working rules are in [CLAUDE.md](CLAUDE.md).
 
 ---

@@ -49,10 +49,10 @@ async def test_project(dut):
 # The full scenario suite runs through pytest instead: `uv run pytest --backend=rtl`.
 # ---------------------------------------------------------------------------------
 try:
-    from sim.bench.backends.cocotb_rtl import drive_scenario
-    from sim.bench.backends.python import run_python
-    from sim.bench.parity import first_difference, parity_scenario
-    from sim.dut import TtTemplateDut
+    from pioscope.bench.backends.cocotb_rtl import drive_scenario
+    from pioscope.bench.backends.python import run_python
+    from pioscope.bench.parity import first_difference, parity_scenario
+    from pioscope.dut import TtTemplateDut
 
     HAVE_PE = True
 except ImportError:  # pragma: no cover

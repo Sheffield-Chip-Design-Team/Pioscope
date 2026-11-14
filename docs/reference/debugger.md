@@ -3,7 +3,7 @@
 **Audience:** engineers who want to change the debugger itself: add a command, show something new, or support a new kind of model. To *use* the debugger, read [debugging.md](../debugging.md). Usually you won't need this page: a model that follows the observability contract ([simulator.md](simulator.md) §7) is shown without any debugger change.
 
 ```
-                ┌───────────── sim/debug/session.py: DebugSession ─────────────┐
+                ┌───────────── pioscope/debug/session.py: DebugSession ─────────────┐
  pioscope debug ──┤ owns a PySession (the same cycle loop as pioscope sim) + a DUT  │
   repl.py       │ breakpoints, watches, catches, selected core, eval, step  │
                 │ write_vcd/to_gtkw at every stop                                │
@@ -38,7 +38,7 @@ The session never reads a register by name except through `state()` and `set_reg
 1. Add a method `do_mycmd(self, arg: str) -> None` with a one-paragraph docstring.
 2. Use `self.s` (the session) and `self.out(text)` to print.
 3. If it runs the simulation, call `self.report(stop)` afterwards.
-4. Add a case to `sim/packs/pio/tests/test_debug.py` using the `kdb(...)` helper, which runs commands and returns the output.
+4. Add a case to `pioscope/packs/pio/tests/test_debug.py` using the `kdb(...)` helper, which runs commands and returns the output.
 5. Add a row to the command table in [debugging.md](../debugging.md).
 
 The Debug Console in VS Code runs the same `Repl` for any line starting with a known command name. Running and stepping commands are refused there (use the toolbar).
@@ -65,7 +65,7 @@ The Debug Console in VS Code runs the same `Repl` for any line starting with a k
 2. Declare it in `tools/vscode-pioscope/package.json` under `configurationAttributes.launch.properties`. `test_extension_launch_attributes_match_the_adapter` checks that the two agree.
 3. Rebuild the extension: `uv run python tools/vscode-pioscope/build.py`, then `code --install-extension tools/vscode-pioscope/pioscope-asm-0.1.0.vsix`, then reload the window.
 
-**Debugging the adapter.** The `Dap` class in `sim/packs/pio/tests/test_debug.py` is a small DAP client; copy a test and print the messages. An adapter exception is sent to the Debug Console as stderr, and the request fails with its message.
+**Debugging the adapter.** The `Dap` class in `pioscope/packs/pio/tests/test_debug.py` is a small DAP client; copy a test and print the messages. An adapter exception is sent to the Debug Console as stderr, and the request fails with its message.
 
 ## 4. The extension (tools/vscode-pioscope)
 

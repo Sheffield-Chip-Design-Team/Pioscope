@@ -47,7 +47,7 @@
           "launch": {
             "properties": {
               "program": { "type": "string", "description": "Program source (any ISA pack's suffix) or image JSON to run on its engine model.", "default": "${file}" },
-              "scenario": { "type": "string", "description": "Instead of program: a bench scenario factory, module:function (e.g. sim.packs.pio.tests.scenarios:uart_rx)." },
+              "scenario": { "type": "string", "description": "Instead of program: a bench scenario factory, module:function (e.g. pioscope.packs.pio.tests.scenarios:uart_rx)." },
               "devices": { "type": "array", "items": { "enum": ["uart_partner", "spi_slave", "i2c_slave"] }, "description": "Bus partners attached to the program's pins.", "default": ["uart_partner"] },
               "hostTx": { "type": ["array", "string"], "description": "Words the host pushes into the TX FIFO, e.g. [\"0x41\", \"0x42\"]." },
               "uartSend": { "type": ["array", "string"], "description": "Bytes the UART partner transmits to the engine." },
@@ -93,7 +93,7 @@
               "type": "pioscope",
               "request": "launch",
               "name": "Debug ${1:scenario}",
-              "scenario": "${2:sim.packs.pio.tests.scenarios:uart_rx}",
+              "scenario": "${2:pioscope.packs.pio.tests.scenarios:uart_rx}",
               "stopOnEntry": true
             }
           }

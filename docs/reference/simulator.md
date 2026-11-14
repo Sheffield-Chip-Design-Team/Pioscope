@@ -31,22 +31,22 @@
 
 | Layer | Code | Owns |
 |---|---|---|
-| ISA packs | `sim/packs/`, `spec/isa/<pack>.yaml` | one instruction set each: spec, hooks, model, programs, arch data ([ADR-0012](../open_items/0012-isa-packs.md)) |
-| ISA | `sim/isa/` | loads a pack's yaml: instructions, operands, directives, encoding ([isa-flow.md](isa-flow.md)) |
-| Assembler | `sim/asm/` | source → `ProgramImage`; the generic field encoder and the encoder hook |
-| Image | `sim/image.py` | IR (`IrInstr`: addr, name, operands, side, delay, src, text), words, config, symbols, the pack name |
-| Bench | `sim/bench/` | board, nets, pads, wiring, scenarios, the cycle loop (`backends/python.py`), cocotb backend |
-| DUT slot | `sim/dut/` | the contract (`base.py`), stand-ins (`stub.py`), the engine core (`core/`), the pack models (`pio/`, …) |
-| Devices | `sim/devices/` | the other end of each bus |
-| Decoders | `sim/decoders/` | independent waveform decoders; they may import only `sim/wave.py` |
-| Debugger | `sim/debug/` | session (core), repl (terminal), dap (VS Code) ([debugger.md](debugger.md)) |
-| Arch study | `sim/arch/` | demand, allocation, area model, report ([arch-guide.md](../arch-guide.md)) |
+| ISA packs | `pioscope/packs/`, `spec/isa/<pack>.yaml` | one instruction set each: spec, hooks, model, programs, arch data ([ADR-0012](../open_items/0012-isa-packs.md)) |
+| ISA | `pioscope/isa/` | loads a pack's yaml: instructions, operands, directives, encoding ([isa-flow.md](isa-flow.md)) |
+| Assembler | `pioscope/asm/` | source → `ProgramImage`; the generic field encoder and the encoder hook |
+| Image | `pioscope/image.py` | IR (`IrInstr`: addr, name, operands, side, delay, src, text), words, config, symbols, the pack name |
+| Bench | `pioscope/bench/` | board, nets, pads, wiring, scenarios, the cycle loop (`backends/python.py`), cocotb backend |
+| DUT slot | `pioscope/dut/` | the contract (`base.py`), stand-ins (`stub.py`), the engine core (`core/`), the pack models (`pio/`, …) |
+| Devices | `pioscope/devices/` | the other end of each bus |
+| Decoders | `pioscope/decoders/` | independent waveform decoders; they may import only `pioscope/wave.py` |
+| Debugger | `pioscope/debug/` | session (core), repl (terminal), dap (VS Code) ([debugger.md](debugger.md)) |
+| Arch study | `pioscope/arch/` | demand, allocation, area model, report ([arch-guide.md](../arch-guide.md)) |
 
 ---
 
 ## 2. One sysclk cycle
 
-`PySession.step()` (`sim/bench/backends/python.py`) runs cycle k. The phase order is ADR-0002:
+`PySession.step()` (`pioscope/bench/backends/python.py`) runs cycle k. The phase order is ADR-0002:
 
 1. The host driver offers TX words (`host_push`) before the edge.
 2. `Board.cycle(k, out)`:
@@ -77,7 +77,7 @@ Timing consequences:
 
 ## 3. The DUT contract
 
-`sim/dut/base.py` is a `Protocol`. Anything that implements it can sit in the DUT slot (`--dut package.module:callable`). `--dut engine` builds the engine model of the program's ISA pack, and the test default `--dut auto` does the same for scenarios that need an engine.
+`pioscope/dut/base.py` is a `Protocol`. Anything that implements it can sit in the DUT slot (`--dut package.module:callable`). `--dut engine` builds the engine model of the program's ISA pack, and the test default `--dut auto` does the same for scenarios that need an engine.
 
 | Method | Meaning |
 |---|---|
@@ -94,7 +94,7 @@ The observability members (§7) are optional too, but a model without them can't
 
 ---
 
-## 4. The engine core (`sim/dut/core/`)
+## 4. The engine core (`pioscope/dut/core/`)
 
 Every pack's model builds on the same core:
 
@@ -109,7 +109,7 @@ Every pack's model builds on the same core:
 
 **Hooks** a model overrides on `Core`:
 
-| Hook | Default | PIO (`sim/dut/pio`) |
+| Hook | Default | PIO (`pioscope/dut/pio`) |
 |---|---|---|
 | `before_exec()` | nothing | nothing |
 | `fetch()` | `prog[pc]` | an `out exec` / `mov exec` word first |
@@ -140,7 +140,7 @@ A handler has the signature `handler(tc, ins: IrInstr, first: bool) -> bool`.
 - Side-set is applied by the core (`side_set`), not by the handler. `[delay]` cycles are added after completion.
 - Trace events come from `tc.emit(kind, **data)`. Flags are set with `tc.set_flag(name)`.
 
-Registration (from `sim/dut/pio/exec.py`):
+Registration (from `pioscope/dut/pio/exec.py`):
 
 ```python
 HANDLERS, handler = registry()
@@ -152,13 +152,13 @@ def _jmp(sm: PioSm, ins: IrInstr, first: bool) -> bool:
     return True
 ```
 
-Each pack's tests fail if a handler is missing or extra (`sim/packs/pio/tests/test_exec.py::test_every_instruction_has_a_handler`).
+Each pack's tests fail if a handler is missing or extra (`pioscope/packs/pio/tests/test_exec.py::test_every_instruction_has_a_handler`).
 
 ---
 
 ## 6. Units
 
-Every unit subclasses `Unit` (`sim/dut/core/unit.py`):
+Every unit subclasses `Unit` (`pioscope/dut/core/unit.py`):
 
 ```python
 class Unit:
@@ -197,7 +197,7 @@ What each becomes:
 - Each shared unit appears under Shared and as `engine.shared.<unit>`.
 - Each event source can be used in `catch event SOURCE:KIND` and `Result.logs[SOURCE]`.
 
-`sim/packs/pio/tests/test_debug.py` checks all of this with a two-SM model defined only in the test.
+`pioscope/packs/pio/tests/test_debug.py` checks all of this with a two-SM model defined only in the test.
 
 ---
 
@@ -208,7 +208,7 @@ From CLAUDE.md §8:
 - **Bounded work per cycle.** Everything a model does in one `step` should be something hardware can do in one cycle. Keep loops bounded by fixed sizes (pins, FIFO depth), never by data.
 - **Explicit widths.** Mask registers (`& M32`), and give every probe a width.
 - **ISA semantics come from the pack's yaml.** Where the spec leaves a choice open, record the choice in an ADR. If a protocol needs something the ISA lacks, that is a finding: record it first (agreements #2, #3).
-- **Decoders stay independent.** Never import an engine or the devices into `sim/decoders/`.
+- **Decoders stay independent.** Never import an engine or the devices into `pioscope/decoders/`.
 
 ---
 
@@ -244,7 +244,7 @@ Run it with `pioscope sim … --dut mypkg.mod:TwoSms`, `pioscope debug … --dut
 
 The image format holds one program, so every core runs the same one. Giving each core its own program, pins and host port is future work.
 
-**…add an engine model for a new ISA:** see [isa-flow.md](isa-flow.md) §5. Subclass `sim.dut.core.Core` and `Engine`, write one handler per instruction with `registry()`, and name the model in the pack's `PACK`.
+**…add an engine model for a new ISA:** see [isa-flow.md](isa-flow.md) §5. Subclass `pioscope.dut.core.Core` and `Engine`, write one handler per instruction with `registry()`, and name the model in the pack's `PACK`.
 
 **…add a trace event:** call `tc.emit("kind", key=value)` in the core or a handler, or `engine.emit_shared(...)` in a shared unit. Document it in [debugging.md](../debugging.md) §1.
 
@@ -258,11 +258,11 @@ The image format holds one program, so every core runs the same one. Giving each
 
 | Area | Tests |
 |---|---|
-| A pack's handlers (directed, one behaviour each) | `sim/packs/pio/tests/test_exec.py` |
-| A pack's encoding | `sim/packs/pio/tests/test_encode.py` |
-| A pack's programs against devices and decoders | `sim/packs/pio/tests/test_scenarios.py` (run on the model by default, `--dut auto`) |
-| Debugger (kdb and DAP), tools follow the model | `sim/packs/pio/tests/test_debug.py` |
-| Bench, devices, decoders, examples, VS Code extension | `sim/tests/` |
+| A pack's handlers (directed, one behaviour each) | `pioscope/packs/pio/tests/test_exec.py` |
+| A pack's encoding | `pioscope/packs/pio/tests/test_encode.py` |
+| A pack's programs against devices and decoders | `pioscope/packs/pio/tests/test_scenarios.py` (run on the model by default, `--dut auto`) |
+| Debugger (kdb and DAP), tools follow the model | `pioscope/packs/pio/tests/test_debug.py` |
+| Bench, devices, decoders, examples, VS Code extension | `pioscope/tests/` |
 
-Run `uv run pytest`, `uv run ruff check sim` and `uv run mypy` before every commit.
+Run `uv run pytest`, `uv run ruff check pioscope` and `uv run mypy` before every commit.
 

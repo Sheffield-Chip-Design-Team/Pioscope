@@ -1,7 +1,7 @@
 # Protocol mixes for the PIO architecture study (docs/arch-guide.md).
 #
 # Each mix is a set of programs that run at the same time on one engine.
-# `prog` names a program of the pio pack (sim/packs/pio/programs, without .pio).
+# `prog` names a program of the pio pack (pioscope/packs/pio/programs, without .pio).
 # `load` is the fraction of time that protocol's line is busy (0..1): it sets the
 # activity estimate of its state machine. A program may appear more than once.
 #

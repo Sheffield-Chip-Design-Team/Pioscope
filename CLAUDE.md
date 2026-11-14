@@ -12,7 +12,7 @@ A PIO-style engine has small cores (state machines, on the RP2040) that run shor
 - private resources per core (PIO), or
 - pools allocated by software (a mesh).
 
-An instruction set is an **ISA pack** (ADR-0012). The example pack is the **RP2040 PIO** (`spec/isa/pio.yaml`, `sim/packs/pio`, `sim/dut/pio`):
+An instruction set is an **ISA pack** (ADR-0012). The example pack is the **RP2040 PIO** (`spec/isa/pio.yaml`, `pioscope/packs/pio`, `pioscope/dut/pio`):
 - the exact 16-bit encoding;
 - a state-machine model;
 - UART, SPI, I²C and WS2812 programs.
@@ -26,7 +26,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 **In scope:**
 1. ISA specifications, each in a single machine-readable source (`spec/isa/<pack>.yaml`).
 2. An assembler: source → instruction words + a config image + a listing.
-3. Cycle-accurate, deterministic engine models (one or more cores) with pins, FIFOs and units, on a shared core (`sim/dut/core`).
+3. Cycle-accurate, deterministic engine models (one or more cores) with pins, FIFOs and units, on a shared core (`pioscope/dut/core`).
 4. Device models (the other end of each bus) and independent waveform decoders.
 5. Protocol programs and a test suite that validates them.
 6. Per-protocol metrics, and an analytic architecture study (area, utilisation).
@@ -41,7 +41,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 
 ## 3. Machine model (the generic core)
 
-**Per core** (`sim.dut.core.Core`):
+**Per core** (`pioscope.dut.core.Core`):
 - a PC and instruction memory (32 words like PIO; a parameter of the ISA);
 - scratch registers X and Y (32-bit);
 - shift registers OSR and ISR, 32-bit, with shift counters;
@@ -52,7 +52,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 A model adds what its ISA needs: autopull/autopush and shift directions (PIO), units, timed operations.
 
 **Units:**
-- hardware attached to a core, or shared between cores (`sim.dut.core.Unit`);
+- hardware attached to a core, or shared between cores (`pioscope.dut.core.Unit`);
 - the PIO model's GPIO outputs and IRQ flags are shared units.
 
 The tools (trace, VCD, debugger) show any unit a model reports, through the observability contract (ADR-0010).
@@ -75,8 +75,8 @@ The tools (trace, VCD, debugger) show any unit a model reports, through the obse
 | I²C | master write; ACK/NACK; clock stretching |
 
 **Test structure:**
-1. **Device models** in `sim/devices/` play the other end of the bus: a UART partner (configurable baud error and glitches), an SPI slave (all modes), an I²C slave (address match, stretching, NACK), and a second I²C master.
-2. **Independent reference decoders** in `sim/decoders/` decode the pin waveform. They must not share code with the engine models.
+1. **Device models** in `pioscope/devices/` play the other end of the bus: a UART partner (configurable baud error and glitches), an SPI slave (all modes), an I²C slave (address match, stretching, NACK), and a second I²C master.
+2. **Independent reference decoders** in `pioscope/decoders/` decode the pin waveform. They must not share code with the engine models.
 3. **Property-based tests** (Hypothesis): random payloads round-trip, encodings round-trip.
 4. **Fault injection:** baud error, glitches, NACK, stretching.
 5. **Timing checks** against each protocol's spec (bit period, setup/hold, sample point).
@@ -103,7 +103,7 @@ docs/
   arch-guide.md            # guide to the architecture study
   open_items/              # ADRs: one file per decision
   pio/                     # the PIO pack: machine-model.md + generated isa.md, isa-encoding.*, arch-study.*
-sim/                       # Python package
+pioscope/                       # Python package
   isa/                     # loads a pack's yaml
   asm/                     # lexer, operands, directives, encoder (hook), expressions, listing, errors
   image.py                 # ProgramImage (IR + words + config + pack) <-> JSON / hex

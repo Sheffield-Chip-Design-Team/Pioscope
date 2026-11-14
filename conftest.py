@@ -53,7 +53,7 @@ def root() -> pathlib.Path:
 
 from collections.abc import Callable  # noqa: E402
 
-from sim.bench.scenario import Result, ScenarioFactory  # noqa: E402
+from pioscope.bench.scenario import Result, ScenarioFactory  # noqa: E402
 
 RunScenario = Callable[[ScenarioFactory], Result]
 
@@ -84,8 +84,8 @@ def bench(request: pytest.FixtureRequest) -> RunScenario:
     def _run(factory: ScenarioFactory) -> Result:
         sc = factory()
         if backend == "python":
-            from sim.bench.backends.python import run_python
-            from sim.dut import dut_factory
+            from pioscope.bench.backends.python import run_python
+            from pioscope.dut import dut_factory
 
             spec = dut_spec
             if spec == "auto":
@@ -96,7 +96,7 @@ def bench(request: pytest.FixtureRequest) -> RunScenario:
             return run_python(sc, dut)
         if sc.requires_engine and not rtl_engine:
             pytest.skip(f"no engine: RTL slot not flagged --rtl-engine ({sc.name})")
-        from sim.bench.backends.cocotb_rtl import run_rtl
+        from pioscope.bench.backends.cocotb_rtl import run_rtl
 
         return run_rtl(factory, sim=sim, sources=rtl_src or None, waves=waves)
 
@@ -108,7 +108,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo[None]):  
     """On failure, append each bench run's timestamped event timeline to the report."""
     report = yield
     if report.when == "call" and report.failed:
-        from sim.bench.report import render_log
+        from pioscope.bench.report import render_log
 
         for r in getattr(item, "bench_results", []):
             report.sections.append(
