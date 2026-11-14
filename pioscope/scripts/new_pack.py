@@ -337,7 +337,7 @@ def scaffold(name: str, out: Path, pioscope: str | None = None) -> Path:
             pioscope = os.path.relpath(checkout, root)
     if pioscope is None:
         source = ('# pioscope = { path = "../pioscope", editable = true }   # co-development\n'
-                  '# pioscope = { git = "https://github.com/OWNER/pioscope", tag = "v0.2.0" }')
+                  '# pioscope = { git = "https://github.com/Sheffield-Chip-Design-Team/Pioscope", tag = "v0.2.0" }')
     elif "://" in pioscope or pioscope.startswith("git@"):
         source = f'pioscope = {{ git = "{pioscope}" }}'
     elif pioscope.endswith(".whl"):

@@ -55,7 +55,7 @@ PIOScope is a library: your ISA lives in **your own repository** and PIOScope fi
 
 ```bash
 uv init myproject && cd myproject
-uv add "pioscope @ git+https://github.com/<owner>/pioscope@v0.2.0"   # until it is on PyPI
+uv add "pioscope @ git+https://github.com/Sheffield-Chip-Design-Team/Pioscope@v0.2.0"   # until it is on PyPI
 uv run pioscope new-pack myisa       # writes ./myisa/: a ready-to-install pack project
 cd myisa && uv sync && uv run pytest
 uv run pioscope --isa myisa isa-docs && uv run pioscope --isa myisa arch --write
