@@ -37,7 +37,7 @@ def render(data: dict[str, Any]) -> str:
     docs = _paths()[3]
 
     def ref(text: str, path: str) -> str:
-        if docs is None:  # a downstream project: PIOScope's docs are not here
+        if not (Path.cwd() / "docs" / path).is_file():  # e.g. a downstream project
             return f"{html.escape(text)} (PIOScope docs/{html.escape(path)})"
         return f'<a href="{html.escape(docs)}/{html.escape(path)}">{html.escape(text)}</a>'
 

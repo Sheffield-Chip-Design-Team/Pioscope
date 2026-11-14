@@ -46,25 +46,23 @@ def _table(head: Sequence[str], rows: Sequence[Sequence[str]]) -> list[str]:
             *("| " + " | ".join(r) + " |" for r in rows), ""]
 
 
-def _paths() -> tuple[str, str, str, str | None]:
-    """(pack title, arch data dir, programs dir, docs/ relative to the output). The docs
-    path is None when the working directory is not a PIOScope checkout (a downstream
-    project): its docs/ does not hold ADR-0007 or arch-guide.md, so they are named
-    without a link."""
+def _paths() -> tuple[str, str, str, str]:
+    """(pack title, arch data dir, programs dir, docs/ relative to the output)."""
     import os
 
     from pioscope.packs import active, display_path
 
     p = active()
-    docs = Path.cwd() / "docs"
-    rel = (os.path.relpath(docs, p.docs_dir)
-           if (docs / "arch-guide.md").is_file() else None)
-    return p.title, display_path(p.arch), display_path(p.programs), rel
+    return (p.title, display_path(p.arch), display_path(p.programs),
+            os.path.relpath(Path.cwd() / "docs", p.docs_dir))
 
 
-def _ref(text: str, docs: str | None, path: str) -> str:
-    """A link to PIOScope's docs/`path`, or plain text when they are not here."""
-    return f"[{text}]({docs}/{path})" if docs is not None else f"{text} (PIOScope docs/{path})"
+def _ref(text: str, docs: str, path: str) -> str:
+    """A Markdown link to docs/`path` when that file is in this project; else plain text
+    naming PIOScope's docs (a downstream project does not carry them)."""
+    if (Path.cwd() / "docs" / path).is_file():
+        return f"[{text}]({docs}/{path})"
+    return f"{text} (PIOScope docs/{path})"
 
 
 def render(ws: Sequence[Workload], archs: Sequence[Arch], c: Cost) -> str:
