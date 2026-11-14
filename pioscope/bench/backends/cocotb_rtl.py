@@ -31,9 +31,12 @@ from pioscope.bench.pads import PadIn, PadOut
 from pioscope.bench.report import format_event
 from pioscope.bench.scenario import Result, RunState, Scenario, ScenarioFactory
 
-ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_SOURCES = [ROOT / "src" / "project.v"]
-TB = ROOT / "test" / "tb.v"
+RTL_DIR = Path(__file__).resolve().parents[1] / "rtl"
+#: The Tiny Tapeout harness: instantiates a `tt_um_*` top with the ui/uo/uio pads.
+TB = RTL_DIR / "tb.v"
+#: The stand-in RTL when no sources are given: the Tiny Tapeout example design, whose
+#: Python twin is `pioscope.dut.TtTemplateDut` (the bench parity test uses both).
+DEFAULT_SOURCES = [RTL_DIR / "tt_template.v"]
 
 
 # ------------------------------------------------------------------------------
@@ -191,7 +194,7 @@ def run_rtl(
     ref, kwargs = factory_ref(factory)
     scenario = factory()  # also validates in this process
     srcs = [Path(s) for s in (sources or DEFAULT_SOURCES)]
-    bdir = Path(build_dir or ROOT / "sim_build" / f"pioscope_{sim}")
+    bdir = Path(build_dir or Path.cwd() / "sim_build" / f"pioscope_{sim}")
     tdir = bdir / "runs" / scenario.name
     tdir.mkdir(parents=True, exist_ok=True)
     result_path = tdir / "result.json"
@@ -210,7 +213,7 @@ def run_rtl(
         build_args = ["--timing", "-Wno-fatal"]
     runner.build(
         sources=[*srcs, TB],
-        includes=[ROOT / "src"],
+        includes=sorted({s.resolve().parent for s in srcs}),
         defines=defines or {},
         hdl_toplevel="tb",
         build_dir=bdir,
@@ -223,7 +226,7 @@ def run_rtl(
         "PIOSCOPE_SCENARIO_ARGS": encode_kwargs(kwargs),
         "PIOSCOPE_RESULT": str(result_path),
         "PIOSCOPE_TRACE": "1" if trace else "",
-        "PYTHONPATH": os.pathsep.join([str(ROOT), os.environ.get("PYTHONPATH", "")]),
+        "PYTHONPATH": os.pathsep.join([os.getcwd(), os.environ.get("PYTHONPATH", "")]),
     }
     runner.test(
         test_module="pioscope.bench.backends.cocotb_entry",

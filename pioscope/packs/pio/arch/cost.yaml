@@ -28,7 +28,7 @@ units: {}            # a PIO state machine has no attached units
 # macro is never cheaper for them. SG13CMOS5L availability is not stated in
 # the PDK docs; ttihp-cmos5l-sram-example uses RM_IHPSG13_1P_256x16_c2_bm_bist.
 nand2_um2: 7.2576    # sg13g2_nand2_1 area: converts macro um^2 to GE
-tile_um2: 31310      # one Tiny Tapeout tile, about 202 x 155 um (info.yaml)
+tile_um2: 31310      # one Tiny Tapeout tile, about 202 x 155 um (Tiny Tapeout tile size)
 sram:
   # single-port
   - {name: RM_IHPSG13_1P_64x16_c2,          words: 64,  bits: 16, ports: 1, um2: 15240.45}

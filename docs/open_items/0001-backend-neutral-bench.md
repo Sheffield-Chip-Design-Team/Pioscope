@@ -10,9 +10,9 @@ The phase goal is evidence that the ISA suits serial protocols, gathered before 
 - Devices are synchronous step machines, not cocotb coroutines.
 - Two backends share one `Board` (`pioscope/bench/board.py`):
   - **python**: a pure-Python cycle loop with a Python DUT (the stub now, the engine model later).
-  - **rtl**: a cocotb adapter around `test/tb.v` (`pioscope/bench/backends/cocotb_rtl.py`).
+  - **rtl**: a cocotb adapter around `pioscope/bench/rtl/tb.v` (`pioscope/bench/backends/cocotb_rtl.py`).
 - Checks consume only a `Result` (waveform plus device logs), so they cannot depend on the backend.
-- The drop-in guarantee is tested. The same scenario on `TtTemplateDut` and on `src/project.v` must give identical waveforms (`pioscope/tests/bench/test_rtl_parity.py`, and `test/test.py` in the TT `make` flow).
+- The drop-in guarantee is tested. The same scenario on `TtTemplateDut` and on `pioscope/bench/rtl/tt_template.v` must give identical waveforms (`pioscope/tests/bench/test_rtl_parity.py`, and `test/test.py` in the Tiny Tapeout template's `make` flow).
 
 ## Consequences
 - Fast default runs (about 2 s for the full suite) on the Python backend.

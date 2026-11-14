@@ -220,7 +220,7 @@ def rtl_main(argv: Sequence[str] | None = None) -> int:
                                  description="Run a scenario against RTL via cocotb.")
     ap.add_argument("--scenario", required=True, help="module:factory")
     ap.add_argument("--sim", default="icarus", choices=["icarus", "verilator"])
-    ap.add_argument("--src", action="append", type=Path, help="RTL sources (default src/project.v)")
+    ap.add_argument("--src", action="append", type=Path, help="RTL sources (default: the packaged TT template stand-in)")
     ap.add_argument("--vcd", type=Path, help="also write the bench-level waveform as VCD")
     ap.add_argument("--waves", action="store_true", help="simulator waveform dump")
     _add_log_args(ap)

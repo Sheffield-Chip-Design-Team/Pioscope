@@ -1,5 +1,5 @@
 """The drop-in guarantee: the same scenario on the Python twin of the TT
-template and on the template RTL (src/project.v) gives identical waveforms.
+template and on the template RTL (pioscope/bench/rtl/tt_template.v) gives identical waveforms.
 
 Runs on the simulator selected with --sim (default icarus); skipped if that
 simulator is not installed.

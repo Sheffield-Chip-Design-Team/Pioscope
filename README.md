@@ -1,4 +1,4 @@
-![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
+![](../../workflows/ci/badge.svg)
 
 # PIOScope: a framework for designing programmable-IO instruction sets
 
@@ -69,15 +69,9 @@ The assembler, bench, debugger, waveforms, VS Code highlighting and arch study t
 
 ## Tiny Tapeout
 
-The bench targets a [Tiny Tapeout](https://tinytapeout.com) tile: the DUT's pads are its `ui`/`uo`/`uio` pins. The project uses the Tiny Tapeout Verilog template:
-- the description is in [docs/info.md](docs/info.md);
-- the RTL goes in `src/`, with its sources listed in [info.yaml](info.yaml) (`source_files`, `top_module`);
-- the cocotb testbench is in [test/](test/README.md).
+The bench models a [Tiny Tapeout](https://tinytapeout.com) tile: the DUT's pads are its `ui`/`uo`/`uio` pins. The RTL backend drives any `tt_um_*` top through the packaged harness (`pioscope/bench/rtl/tb.v`).
 
-The GitHub action builds the ASIC files with [LibreLane](https://www.zerotoasiccourse.com/terminology/librelane/).
-
-- [Enabling GitHub Pages](https://tinytapeout.com/faq/#my-github-action-is-failing-on-the-pages-part) for the results page
-- [Tiny Tapeout FAQ](https://tinytapeout.com/faq/) · [Digital design lessons](https://tinytapeout.com/digital_design/)
+For a whole Tiny Tapeout project, start from the **`pioscope-tt-template`** repository. It is the Tiny Tapeout IHP Verilog template (GDS, FPGA, docs and test actions, the cocotb flow), with PIOScope as its bench.
 
 ## License
 

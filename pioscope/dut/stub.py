@@ -46,7 +46,7 @@ class StubDut:
 
 
 class TtTemplateDut(StubDut):
-    """Python twin of the Tiny Tapeout template `src/project.v`
+    """Python twin of the Tiny Tapeout template `pioscope/bench/rtl/tt_template.v`
     (``uo_out = ui_in + uio_in``, uio released). Used by the backend parity test:
     the same scenario must give identical waveforms on this and on the RTL."""
 

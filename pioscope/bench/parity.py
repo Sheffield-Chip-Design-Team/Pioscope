@@ -4,7 +4,7 @@ Devices drive activity onto DUT input pads (UART on ui0, an SPI master on
 ui1..ui3, a pulled-up net on uio0) and listen on DUT outputs (uo0..uo3). With
 the Tiny Tapeout template DUT (`uo = ui + uio_in`) the outputs depend on the
 inputs, so the run exercises both directions of the adapter. The Python twin
-(`TtTemplateDut`) and the RTL (`src/project.v`) must give identical waveforms.
+(`TtTemplateDut`) and the RTL (`pioscope/bench/rtl/tt_template.v`) must give identical waveforms.
 """
 
 from __future__ import annotations

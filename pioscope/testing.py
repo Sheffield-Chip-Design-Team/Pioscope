@@ -1,8 +1,17 @@
+"""pytest plugin: the bench fixtures and options for any project's scenario tests.
+
+Installed with PIOScope and loaded automatically (the `pytest11` entry point), so a
+project with its own ISA pack gets them without a conftest:
+
+- options: --backend python|rtl, --sim, --dut auto|stub|tt_template|engine|module:callable,
+  --rtl-engine, --rtl-src, --waves, --update-golden;
+- fixtures: `bench` (run a scenario factory on the selected backend), `golden` (compare
+  with, or with --update-golden rewrite, a golden file), `root` (the pytest rootdir).
+"""
+
 import pathlib
 
 import pytest
-
-ROOT = pathlib.Path(__file__).resolve().parent
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -19,7 +28,8 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--rtl-engine", action="store_true",
                      help="the RTL in the DUT slot is the real engine (run engine scenarios)")
     parser.addoption("--rtl-src", action="append", default=[],
-                     help="RTL source file(s) for --backend=rtl (default src/project.v)")
+                     help="RTL source file(s) for --backend=rtl (default: the packaged Tiny "
+                     "Tapeout template stand-in)")
     parser.addoption("--waves", action="store_true",
                      help="RTL runs dump an FST: sim_build/pioscope_<sim>/runs/<scenario>/tb.fst")
 
@@ -45,8 +55,8 @@ def golden(request: pytest.FixtureRequest) -> Golden:
 
 
 @pytest.fixture
-def root() -> pathlib.Path:
-    return ROOT
+def root(request: pytest.FixtureRequest) -> pathlib.Path:
+    return pathlib.Path(request.config.rootpath)
 
 
 # ---- scenario runner ------------------------------------------------------------------

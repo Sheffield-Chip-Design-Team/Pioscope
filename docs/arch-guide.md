@@ -171,7 +171,7 @@ Allocation happens **at load time**, before the programs run, and stays fixed wh
 | flop bit | One `sg13g2_dfrbp_1` flip-flop = 52.6176 µm² = **7.25 GE** | PDK LEF (sourced) |
 | mux bit | One bit of a 2:1 mux, `sg13g2_mux2_1` = 18.144 µm² = **2.5 GE**. An N:1 mux costs N−1 of them per bit. | PDK LEF (sourced) |
 | **µm²** | Physical area. SRAM macros are given in µm² and converted to GE by ÷ 7.2576. | IHP SRAM datasheets (sourced) |
-| **tile** | One Tiny Tapeout tile, about 202 × 155 µm = 31,310 µm² ≈ **4,314 GE**. The report counts tiles **at 100% density**; real placement and routing need noticeably more. A 64-word macro (236.8 µm wide) is wider than one tile. | `info.yaml` comment |
+| **tile** | One Tiny Tapeout tile, about 202 × 155 µm = 31,310 µm² ≈ **4,314 GE**. The report counts tiles **at 100% density**; real placement and routing need noticeably more. A 64-word macro (236.8 µm wide) is wider than one tile. | Tiny Tapeout tile size |
 | **word** | One instruction (`word_bits`) or one FIFO entry (`fifo_bits`) | the pack's ISA yaml |
 | **load** | The fraction of time a protocol's line is busy (0–1). It is an input, set per program in each workload. | `workloads.yaml` (assumed) |
 | **bit share** | For one pass of a program, the share of bit-times during which a unit is busy. | the pack's `bit_shares` hook (static estimate) |

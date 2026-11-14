@@ -12,6 +12,9 @@ dependencies = [
 [project.scripts]
 pioscope = "pioscope.cli:main"
 
+[project.entry-points.pytest11]
+pioscope = "pioscope.testing"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",

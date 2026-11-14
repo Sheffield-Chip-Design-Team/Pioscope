@@ -27,7 +27,6 @@ uv run pytest --backend=rtl               # same scenarios through cocotb + Icar
 uv run pytest --backend=rtl --sim=verilator
 uv run pytest --backend=rtl --waves       # also dump sim_build/pioscope_<sim>/runs/<scenario>/tb.fst
 uv run pytest --update-golden             # accept listing / error-message changes
-cd test && uv run make -B                 # TT flow: template test + bench parity test
 
 uv run pioscope asm pioscope/packs/pio/programs/uart_tx.pio -o build/uart_tx.json --listing build/uart_tx.lst --hex build/mem
 uv run pioscope sim build/uart_tx.json --dut engine --device uart_partner --baud 115200 --host-tx 0x41,0x42 --vcd build/out.vcd
@@ -87,7 +86,7 @@ uv run pioscope sim build/uart_tx.json --dut mypkg.model:Engine --device uart_pa
 
 Before trusting results, pass the parity test with your DUT (see ADR-0001).
 
-**RTL.** Put sources in `src/` and keep the TT top-level ports. Then:
+**RTL.** Keep the Tiny Tapeout top-level ports (`tt_um_*`: `ui_in`, `uo_out`, `uio_*`, `clk`, `rst_n`, `ena`); the packaged harness `pioscope/bench/rtl/tb.v` instantiates it. For a whole Tiny Tapeout project (GDS, FPGA and docs actions, the TT cocotb flow), start from the `pioscope-tt-template` repository. Then:
 
 ```sh
 uv run pytest --backend=rtl --rtl-src src/engine.v --rtl-src src/top.v --rtl-engine
