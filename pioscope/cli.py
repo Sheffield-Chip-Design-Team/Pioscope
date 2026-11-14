@@ -1,5 +1,5 @@
 """The `pioscope` command: `pioscope [--isa PACK] asm | sim | rtl | debug | dap | metrics |
-isa-docs | arch`.
+isa-docs | arch | vscode | new-pack`.
 
 Source files are assembled with the ISA pack of their suffix (`.pio`, ...); `--isa`
 (or $PIOSCOPE_ISA) picks the active pack for everything else: generated documents,
@@ -274,6 +274,12 @@ def _vscode(argv: Sequence[str]) -> int:
     return vscode_main(list(argv))
 
 
+def _new_pack(argv: Sequence[str]) -> int:
+    from pioscope.scripts.new_pack import main as new_pack_main
+
+    return new_pack_main(list(argv))
+
+
 def _arch(argv: Sequence[str]) -> int:
     from pioscope.arch.report import main as arch_main
 
@@ -289,6 +295,7 @@ COMMANDS: dict[str, tuple[Callable[[Sequence[str]], int], str]] = {
     "debug": (_debug, "step through a program on its ISA pack's engine model, GDB style"),
     "dap": (_dap, "Debug Adapter Protocol server for VS Code (the `vscode` extension)"),
     "vscode": (_vscode, "build the VS Code extension (.vsix) for the installed ISA packs"),
+    "new-pack": (_new_pack, "scaffold a new ISA pack project (own repo, entry-point registered)"),
     "arch": (_arch, "architecture study: PIO-style vs mesh, area and utilisation"),
 }
 

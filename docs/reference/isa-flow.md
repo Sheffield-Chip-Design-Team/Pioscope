@@ -148,20 +148,32 @@ A pack that models an existing ISA (PIO) changes only to match that ISA more clo
 
 ## 5. Adding an ISA pack
 
-1. **Spec:** `<package>/isa.yaml` with `pack: <name>`. Start from `pio.yaml` for the structure.
-2. **Pack:** `pioscope/packs/<name>/__init__.py` defining
-   ```python
-   PACK = IsaPack(name="<name>", title="...", spec=ROOT / "<package>/isa.yaml",
-                  programs=HERE / "programs", arch=ROOT / "<package>/arch",
-                  docs=ROOT / "docs/<name>", model="pioscope.dut.<name>:MyEngine",
-                  demand="pioscope.packs.<name>.demand", ext=".<suffix>")
-   ```
-   Packs are discovered automatically. `rank` decides the default when no `--isa` or `$PIOSCOPE_ISA` is given.
-3. **Hooks**, only if yaml can't say it: directive handlers (`registry()` from `pioscope.asm.directives`) and an encoder module (§2 step 6). See `pioscope/packs/pio/directives.py` and `encode.py`.
-4. **Model:** subclass `pioscope.dut.core.Core` and `Engine` (`pioscope/dut/pio` is a complete example), with one handler per instruction from `pioscope.dut.core.registry()`.
-5. **Arch study:** `<package>/arch/{cost,architectures,workloads}.yaml` and a `demand` module (`units_used`, `bit_shares`, `fifos`, `bit_rate`; `pioscope/packs/pio/demand.py` is the minimal one).
-6. **Tests:** `pioscope/packs/<name>/tests/` with a `conftest.py` that activates the pack (copy PIO's). Scenarios run on the model by default.
-7. Run `uv run pioscope vscode`: the editor grammar picks up the new mnemonics and the new file suffix.
+A pack lives in **your own package**, not inside PIOScope, and is registered by an entry point. Start it with the scaffolder:
+
+```
+uv add pioscope            # or: git URL, or an editable path for co-development
+uv run pioscope new-pack myisa [--pioscope ../pioscope]
+cd myisa && uv sync && uv run pytest
+uv run pioscope --isa myisa isa-docs
+```
+
+`new-pack` writes a project at `./myisa/` with a three-instruction ISA (`set`, `jmp`, `nop`), the generic field encoder, a model, the arch-study data and a `blink.myisa` program:
+
+| File | What it is |
+|---|---|
+| `pyproject.toml` | depends on `pioscope`; `[project.entry-points."pioscope.packs"] myisa = "myisa_isa.pack:PACK"` |
+| `myisa_isa/pack.py` | `PACK = IsaPack(name=..., title=..., spec=HERE/"isa.yaml", programs=HERE/"programs", arch=HERE/"arch", model="myisa_isa.model:Engine", demand="myisa_isa.demand", ext=".myisa")`. `HERE = pack_dir(__file__)` keeps the data package-relative, so it works from a wheel |
+| `myisa_isa/isa.yaml` | the ISA: single source of truth (agreement #1). Grow it from here; `pioscope/packs/pio/isa.yaml` shows every feature |
+| `myisa_isa/model.py` | `Core` / `Engine` subclasses of `pioscope.dut.core`, one handler per instruction from `registry()`. `pioscope/dut/pio` is a complete example |
+| `myisa_isa/demand.py` | arch-study hooks (`units_used`, `bit_shares`, `fifos`, `bit_rate`) |
+| `myisa_isa/arch/*.yaml` | area costs, architectures, workloads. Edit the workloads to name your programs |
+| `tests/` | a test that every yaml instruction has a handler and the blink program runs; `conftest.py` activates the pack with `pioscope.packs.use` |
+
+Generated documents go to `docs/<name>` under the directory you run the tools from. `rank` on the `IsaPack` decides the default pack when several are installed and no `--isa` / `$PIOSCOPE_ISA` is given.
+
+After the skeleton works:
+- **Hooks**, only if the yaml can't say it: directive handlers (`registry()` from `pioscope.asm.directives`) and an encoder module (§2 step 6), named under `hooks:` in the yaml. See `pioscope/packs/pio/directives.py` and `encode.py`.
+- Run `uv run pioscope vscode`: the editor grammar picks up the new mnemonics and the new file suffix.
 
 ---
 
