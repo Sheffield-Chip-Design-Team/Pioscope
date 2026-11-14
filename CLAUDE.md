@@ -12,7 +12,7 @@ A PIO-style engine has small cores (state machines, on the RP2040) that run shor
 - private resources per core (PIO), or
 - pools allocated by software (a mesh).
 
-An instruction set is an **ISA pack** (ADR-0012). The example pack is the **RP2040 PIO** (`spec/isa/pio.yaml`, `pioscope/packs/pio`, `pioscope/dut/pio`):
+An instruction set is an **ISA pack** (ADR-0012). The example pack is the **RP2040 PIO** (`pioscope/packs/pio/isa.yaml`, `pioscope/packs/pio`, `pioscope/dut/pio`):
 - the exact 16-bit encoding;
 - a state-machine model;
 - UART, SPI, I²C and WS2812 programs.
@@ -24,7 +24,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 ## 2. Scope
 
 **In scope:**
-1. ISA specifications, each in a single machine-readable source (`spec/isa/<pack>.yaml`).
+1. ISA specifications, each in a single machine-readable source (`<pack>/isa.yaml`).
 2. An assembler: source → instruction words + a config image + a listing.
 3. Cycle-accurate, deterministic engine models (one or more cores) with pins, FIFOs and units, on a shared core (`pioscope/dut/core`).
 4. Device models (the other end of each bus) and independent waveform decoders.
@@ -91,8 +91,8 @@ The tools (trace, VCD, debugger) show any unit a model reports, through the obse
 
 ```
 CLAUDE.md
-spec/isa/<pack>.yaml       # single source of truth for each ISA (pio.yaml: RP2040 PIO)
-spec/arch/<pack>/          # architecture study inputs: workloads, architectures, area costs
+<pack>/isa.yaml       # single source of truth for each ISA (pio.yaml: RP2040 PIO)
+<pack>/arch/          # architecture study inputs: workloads, architectures, area costs
 docs/
   README.md                # documentation map: start here
   tutorials/               # hands-on: first program, device+decoder, probe, unit, ISA change
@@ -134,7 +134,7 @@ tools/vscode-pioscope/       # VS Code extension: highlighting for every pack + 
 
 ## 6. Working agreements
 
-1. **A pack's `spec/isa/<pack>.yaml` is the single source of truth** for its ISA. The assembler, the model's set of handlers and the docs all derive from it. Pack-specific code is named by its `hooks:`. Never hard-code an instruction in two places.
+1. **A pack's `<pack>/isa.yaml` is the single source of truth** for its ISA. The assembler, the model's set of handlers and the docs all derive from it. Pack-specific code is named by its `hooks:`. Never hard-code an instruction in two places.
 2. **Don't silently change ISA semantics.** If a change is needed, write a short ADR in `docs/open_items/` first, then change the yaml. A pack that models an existing ISA (PIO) changes only to match it more closely.
 3. **Don't add an instruction just to make a test pass.** A protocol that needs a new instruction is a *finding*. Record it first.
 4. **Deterministic, cycle-accurate simulation.** No wall-clock time, no unseeded randomness. Every cycle's state must be reproducible.

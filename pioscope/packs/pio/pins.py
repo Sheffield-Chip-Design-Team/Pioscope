@@ -1,5 +1,5 @@
 """GPIO numbering of the Tiny Tapeout pads for the PIO pack: ui0-7 = GPIO 0-7,
-uo0-7 = GPIO 8-15, uio0-7 = GPIO 16-23 (spec/isa/pio.yaml `target`)."""
+uo0-7 = GPIO 8-15, uio0-7 = GPIO 16-23 (pioscope/packs/pio/isa.yaml `target`)."""
 
 from __future__ import annotations
 

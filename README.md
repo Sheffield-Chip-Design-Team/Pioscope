@@ -13,7 +13,7 @@ PIOScope is a pre-RTL toolkit for PIO-style programmable IO engines, like the RP
 The question it answers is whether an instruction set suits real serial protocols, before any RTL is written: correct, on time, and at a sensible cost.
 
 An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs.md)). The example pack is the **RP2040 PIO**:
-- `spec/isa/pio.yaml`: the nine instructions in pioasm syntax;
+- `pioscope/packs/pio/isa.yaml`: the nine instructions in pioasm syntax;
 - the exact 16-bit encoding (words match pioasm);
 - a state-machine model with autopull/autopush, shift directions, `exec`, FIFO joins and IRQ flags;
 - UART, SPI (modes 0–3), I²C and WS2812 programs that pass against the device models and decoders.

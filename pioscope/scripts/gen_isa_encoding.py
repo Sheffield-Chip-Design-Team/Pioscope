@@ -25,7 +25,7 @@ from pioscope.packs import active
 
 
 def out_path() -> Path:
-    return active().docs / "isa-encoding.adoc"
+    return active().docs_dir / "isa-encoding.adoc"
 
 
 def field_index(isa: Isa, name: str) -> int:
@@ -357,9 +357,9 @@ def render(isa: Isa) -> str:
 
 
 def _spec_path() -> str:
-    from pioscope.packs import ROOT
+    from pioscope.packs import display_path
 
-    return str(active().spec.relative_to(ROOT))
+    return display_path(active().spec)
 
 
 def main() -> None:

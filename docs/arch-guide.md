@@ -2,7 +2,7 @@
 
 **Intended audience:** hardware engineers who want to read, question or extend the architecture study.
 
-**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`spec/arch/pio/`) as of 2026-11-14.
+**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`pioscope/packs/pio/arch/`) as of 2026-11-14.
 
 Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `pioscope/arch/`.
 
@@ -324,9 +324,9 @@ The **hand-picked architectures** (`architectures.yaml`) are fixed configuration
 
 | To change… | Edit | Then |
 |---|---|---|
-| protocol mixes or loads | `spec/arch/<pack>/workloads.yaml` (`prog` = a program of the pack) | `uv run pioscope --isa <pack> arch --write` |
-| hand-picked architectures | `spec/arch/<pack>/architectures.yaml` (`family: pio` or `mesh`; `imem: flops` or `sram`) | same |
-| area constants, unit prices or the SRAM catalogue | `spec/arch/<pack>/cost.yaml` | same |
+| protocol mixes or loads | `<pack>/arch/workloads.yaml` (`prog` = a program of the pack) | `uv run pioscope --isa <pack> arch --write` |
+| hand-picked architectures | `<pack>/arch/architectures.yaml` (`family: pio` or `mesh`; `imem: flops` or `sram`) | same |
+| area constants, unit prices or the SRAM catalogue | `<pack>/arch/cost.yaml` | same |
 | a program's demand | the program itself (demand is derived from the assembled image), or the pack's `demand` hooks | same |
 
 `uv run pytest` fails if a pack's `arch-study.md` or `arch-study.html` is stale. Commit the regenerated files with the input change.

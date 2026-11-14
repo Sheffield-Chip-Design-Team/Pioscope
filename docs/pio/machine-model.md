@@ -1,6 +1,6 @@
 # The RP2040 PIO model: what it implements
 
-**Audience:** anyone writing PIO programs for the bench, or comparing the model with real silicon. The instruction semantics are in [isa.md](isa.md), generated from `spec/isa/pio.yaml`, and the encoding is in [isa-encoding.html](isa-encoding.html). The code is `pioscope/dut/pio/`, on the generic core (`pioscope/dut/core`, [reference/simulator.md](../reference/simulator.md)).
+**Audience:** anyone writing PIO programs for the bench, or comparing the model with real silicon. The instruction semantics are in [isa.md](isa.md), generated from `pioscope/packs/pio/isa.yaml`, and the encoding is in [isa-encoding.html](isa-encoding.html). The code is `pioscope/dut/pio/`, on the generic core (`pioscope/dut/core`, [reference/simulator.md](../reference/simulator.md)).
 
 ## 1. What is modelled
 

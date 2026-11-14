@@ -1,11 +1,11 @@
 # ISA flow reference: from a pack's yaml to a running instruction
 
-**Audience:** engineers who need to read, question or change an ISA, add a new one (an ISA pack), or develop in parallel with others who do. Read [simulator.md](simulator.md) §5 for how instructions execute. The examples use the RP2040 PIO pack (`spec/isa/pio.yaml`).
+**Audience:** engineers who need to read, question or change an ISA, add a new one (an ISA pack), or develop in parallel with others who do. Read [simulator.md](simulator.md) §5 for how instructions execute. The examples use the RP2040 PIO pack (`pioscope/packs/pio/isa.yaml`).
 
-**The rule:** each pack's `spec/isa/<pack>.yaml` is the single source of truth for its ISA (CLAUDE.md §8 #1, ADR-0012). The assembler, the encoder, the docs and the model's set of handlers all derive from it, and tests fail if they drift apart.
+**The rule:** each pack's `<pack>/isa.yaml` is the single source of truth for its ISA (CLAUDE.md §8 #1, ADR-0012). The assembler, the encoder, the docs and the model's set of handlers all derive from it, and tests fail if they drift apart.
 
 ```
-spec/isa/<pack>.yaml
+<pack>/isa.yaml
    │ pioscope/isa/load.py (validate) → pioscope/isa/spec.py (frozen dataclasses: Isa, InstrSpec, ...)
    ▼
 pioscope/asm/lexer.py      line → Statement(label, mnemonic|.directive, items, side, delay)
@@ -148,18 +148,18 @@ A pack that models an existing ISA (PIO) changes only to match that ISA more clo
 
 ## 5. Adding an ISA pack
 
-1. **Spec:** `spec/isa/<name>.yaml` with `pack: <name>`. Start from `pio.yaml` for the structure.
+1. **Spec:** `<package>/isa.yaml` with `pack: <name>`. Start from `pio.yaml` for the structure.
 2. **Pack:** `pioscope/packs/<name>/__init__.py` defining
    ```python
-   PACK = IsaPack(name="<name>", title="...", spec=ROOT / "spec/isa/<name>.yaml",
-                  programs=HERE / "programs", arch=ROOT / "spec/arch/<name>",
+   PACK = IsaPack(name="<name>", title="...", spec=ROOT / "<package>/isa.yaml",
+                  programs=HERE / "programs", arch=ROOT / "<package>/arch",
                   docs=ROOT / "docs/<name>", model="pioscope.dut.<name>:MyEngine",
                   demand="pioscope.packs.<name>.demand", ext=".<suffix>")
    ```
    Packs are discovered automatically. `rank` decides the default when no `--isa` or `$PIOSCOPE_ISA` is given.
 3. **Hooks**, only if yaml can't say it: directive handlers (`registry()` from `pioscope.asm.directives`) and an encoder module (§2 step 6). See `pioscope/packs/pio/directives.py` and `encode.py`.
 4. **Model:** subclass `pioscope.dut.core.Core` and `Engine` (`pioscope/dut/pio` is a complete example), with one handler per instruction from `pioscope.dut.core.registry()`.
-5. **Arch study:** `spec/arch/<name>/{cost,architectures,workloads}.yaml` and a `demand` module (`units_used`, `bit_shares`, `fifos`, `bit_rate`; `pioscope/packs/pio/demand.py` is the minimal one).
+5. **Arch study:** `<package>/arch/{cost,architectures,workloads}.yaml` and a `demand` module (`units_used`, `bit_shares`, `fifos`, `bit_rate`; `pioscope/packs/pio/demand.py` is the minimal one).
 6. **Tests:** `pioscope/packs/<name>/tests/` with a `conftest.py` that activates the pack (copy PIO's). Scenarios run on the model by default.
 7. Run `uv run python tools/vscode-pioscope/build.py`: the editor grammar picks up the new mnemonics and the new file suffix.
 

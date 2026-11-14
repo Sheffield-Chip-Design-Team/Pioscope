@@ -18,7 +18,7 @@ from typing import Any
 def out_path() -> Path:
     from pioscope.packs import active
 
-    return active().docs / "arch-study.html"
+    return active().docs_dir / "arch-study.html"
 
 
 #: The page: HTML, CSS and the drawing script, with a __DATA__ placeholder for the JSON.

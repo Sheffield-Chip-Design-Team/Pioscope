@@ -1,4 +1,4 @@
-"""Load and validate an ISA spec yaml (spec/isa/<pack>.yaml)."""
+"""Load and validate an ISA spec yaml (<pack>/isa.yaml)."""
 
 from __future__ import annotations
 

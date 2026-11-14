@@ -40,7 +40,7 @@ Include:
 `state()` fields and `probes()` (with widths) the model exposes (ADR-0010).
 
 ## 7. Cost estimate
-Gate-equivalent estimate and its basis (the pack's `spec/arch/<pack>/cost.yaml`, synthesis, a similar block).
+Gate-equivalent estimate and its basis (the pack's `<pack>/arch/cost.yaml`, synthesis, a similar block).
 
 ## 8. Open questions / findings
 Links to findings and ADRs.

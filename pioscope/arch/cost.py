@@ -1,4 +1,4 @@
-"""Area model in gate equivalents (GE). Constants: spec/arch/cost.yaml (placeholders).
+"""Area model in gate equivalents (GE). Constants: the pack's arch/cost.yaml (placeholders).
 
 `area(arch, cost)` returns a breakdown by resource class:
   core, imem (storage), imem_read (read-port muxes), fifo, unit:<type>,

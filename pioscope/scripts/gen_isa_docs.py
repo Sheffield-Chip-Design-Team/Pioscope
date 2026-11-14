@@ -12,7 +12,7 @@ from .gen_isa_encoding import _spec_path, tier_groups
 
 
 def out_path() -> Path:
-    return active().docs / "isa.md"
+    return active().docs_dir / "isa.md"
 
 
 def render(isa: Isa) -> str:

@@ -31,7 +31,7 @@
 
 | Layer | Code | Owns |
 |---|---|---|
-| ISA packs | `pioscope/packs/`, `spec/isa/<pack>.yaml` | one instruction set each: spec, hooks, model, programs, arch data ([ADR-0012](../open_items/0012-isa-packs.md)) |
+| ISA packs | `pioscope/packs/`, `<pack>/isa.yaml` | one instruction set each: spec, hooks, model, programs, arch data ([ADR-0012](../open_items/0012-isa-packs.md)) |
 | ISA | `pioscope/isa/` | loads a pack's yaml: instructions, operands, directives, encoding ([isa-flow.md](isa-flow.md)) |
 | Assembler | `pioscope/asm/` | source → `ProgramImage`; the generic field encoder and the encoder hook |
 | Image | `pioscope/image.py` | IR (`IrInstr`: addr, name, operands, side, delay, src, text), words, config, symbols, the pack name |

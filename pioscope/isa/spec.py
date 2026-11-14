@@ -1,4 +1,4 @@
-"""Frozen data model of an ISA, built from its spec yaml (spec/isa/<pack>.yaml) by
+"""Frozen data model of an ISA, built from its spec yaml (<pack>/isa.yaml) by
 :mod:`pioscope.isa.load`."""
 
 from __future__ import annotations

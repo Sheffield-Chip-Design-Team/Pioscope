@@ -10,7 +10,7 @@ its block-level state is two shared units, so the debugger, trace and VCD show t
   direction bit is 1.
 - `irq`: the block's eight IRQ flags. Flags 0-3 are the host's interrupt lines.
 
-Semantics are spec/isa/pio.yaml's (from the RP2040 datasheet, chapter 3), with these
+Semantics are pioscope/packs/pio/isa.yaml's (from the RP2040 datasheet, chapter 3), with these
 modelling choices:
 - one SM per program (a block has four; a multi-SM model fills `cores` with more);
 - inputs pass the 2-flop synchroniser; a uo pad reads back its driven level;

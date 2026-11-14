@@ -3,7 +3,7 @@
 :toclevels: 2
 :sectnums:
 
-RP2040 PIO, ISA version 1.0.0. Generated from `spec/isa/pio.yaml` by `pioscope isa-docs`; do not edit.
+RP2040 PIO, ISA version 1.0.0. Generated from `pioscope/packs/pio/isa.yaml` by `pioscope isa-docs`; do not edit.
 
 Diagrams show the most significant bit on the left. Under each box: the fixed value in binary, or the slot width in bits. `-` slots are reserved and must be 0; a `!` marks a field whose contents do not fit. The WaveDrom figures render with asciidoctor-diagram or a Kroki server.
 

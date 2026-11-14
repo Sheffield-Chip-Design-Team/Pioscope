@@ -1,6 +1,6 @@
 """The RP2040 PIO instruction format (16 bits), as a pack encoder (ADR-0012).
 
-    15..13  opcode (the instruction's `opcode:` in spec/isa/pio.yaml)
+    15..13  opcode (the instruction's `opcode:` in pioscope/packs/pio/isa.yaml)
     12..8   delay / side-set: [enable if `.side_set .. opt`] [side-set value] [delay]
      7..0   arguments, per instruction (below)
 

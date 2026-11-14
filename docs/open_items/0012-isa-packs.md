@@ -17,11 +17,11 @@ That made it impossible to:
 
 ## Decision
 1. An **ISA pack** bundles everything that belongs to one instruction set. A pack is a sub-package of `pioscope.packs` that defines `PACK = IsaPack(...)`:
-   - **spec:** `spec/isa/<pack>.yaml`, the single source of truth for that ISA (CLAUDE.md §8 #1).
+   - **spec:** `<pack>/isa.yaml`, the single source of truth for that ISA (CLAUDE.md §8 #1).
    - **model:** the engine model (`module:callable`), which is what `--dut engine` builds.
    - **demand:** the arch-study hooks (`units_used`, `bit_shares`, `fifos`).
    - **programs:** its protocol programs.
-   - **arch:** its arch-study data (`spec/arch/<pack>/`).
+   - **arch:** its arch-study data (`<pack>/arch/`).
    - **docs:** where its generated documents go.
 2. The yaml names its own code hooks, so a loaded `Isa` is self-describing:
    ```yaml
@@ -37,6 +37,6 @@ That made it impossible to:
 
 ## Consequences
 - A new ISA is a new pack. None of the framework's code changes.
-- Generated documents move to the pack's `docs` directory, and arch-study data moves to `spec/arch/<pack>/`.
+- Generated documents move to the pack's `docs` directory, and arch-study data moves to `<pack>/arch/`.
 - The debugger, the trace and the VCD depend only on the core and the observability contract, never on one pack's model.
 - The arch study's unit list comes from the pack's `cost.yaml`, so a pack with no units is valid.

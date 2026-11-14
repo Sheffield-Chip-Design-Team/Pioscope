@@ -34,7 +34,7 @@ from .gen_isa_encoding import (
 
 
 def out_path() -> Path:
-    return active().docs / "isa-encoding.html"
+    return active().docs_dir / "isa-encoding.html"
 
 Examples = dict[str, tuple[ProgramImage, IrInstr, int]]
 

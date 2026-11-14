@@ -6,7 +6,7 @@
 git switch -c scratch/isa-tutorial
 ```
 
-## 1. Spec: `spec/isa/pio.yaml`
+## 1. Spec: `pioscope/packs/pio/isa.yaml`
 
 On the RP2350, destination code 3 of `mov` (unused on the RP2040) is `pindirs`. Under `operand_types`, change `mov_dst`:
 

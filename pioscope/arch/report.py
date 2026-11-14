@@ -29,7 +29,7 @@ from .viz import render as render_page
 def out_path() -> Path:
     from pioscope.packs import active
 
-    return active().docs / "arch-study.md"
+    return active().docs_dir / "arch-study.md"
 
 
 
@@ -50,11 +50,11 @@ def _paths() -> tuple[str, str, str, str]:
     """(pack title, arch data dir, programs dir, docs/ relative to the output)."""
     import os
 
-    from pioscope.packs import ROOT, active
+    from pioscope.packs import active, display_path
 
     p = active()
-    return (p.title, str(p.arch.relative_to(ROOT)), str(p.programs.relative_to(ROOT)),
-            os.path.relpath(ROOT / "docs", p.docs))
+    return (p.title, display_path(p.arch), display_path(p.programs),
+            os.path.relpath(Path.cwd() / "docs", p.docs_dir))
 
 
 def render(ws: Sequence[Workload], archs: Sequence[Arch], c: Cost) -> str:

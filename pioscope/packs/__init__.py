@@ -9,10 +9,20 @@ knows nothing about a particular ISA. A pack supplies:
 - `model`: the engine model, as `module:callable` (the DUT for `--dut engine`);
 - `demand`: a module with the arch-study hooks `units_used`, `bit_shares`, `fifos`;
 - `programs`, `arch`: its protocol programs and arch-study data;
-- `docs`: where its generated documents go (isa.md, isa-encoding.*, arch-study.*).
+- `docs`: where its generated documents go (isa.md, isa-encoding.*, arch-study.*); by
+  default `docs/<name>` under the working directory, i.e. the project being worked on.
 
-Packs are discovered from the sub-packages of `pioscope.packs`; each defines `PACK`. The
-active pack is `$PIOSCOPE_ISA` if set, else the discovered pack with the lowest `rank`.
+Keep a pack's spec, programs and arch data inside its Python package (`pack_dir()`), so
+that it works from an installed wheel as well as from a checkout.
+
+Packs are discovered from the sub-packages of `pioscope.packs` (the built-in ones) and
+from the `pioscope.packs` entry-point group, so another project's pack is found once it is
+installed:
+
+    [project.entry-points."pioscope.packs"]
+    myisa = "myisa.pack:PACK"
+
+The active pack is `$PIOSCOPE_ISA` if set, else the discovered pack with the lowest `rank`.
 Tests and tools that need a specific pack use `use(name)`.
 """
 
@@ -29,8 +39,27 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-ROOT = Path(__file__).resolve().parents[2]
 ENV = "PIOSCOPE_ISA"
+ENTRY_POINTS = "pioscope.packs"
+
+
+def pack_dir(module_file: str) -> Path:
+    """The directory of a pack's module: `HERE = pack_dir(__file__)`."""
+    return Path(module_file).resolve().parent
+
+
+def display_path(path: Path) -> str:
+    """`path` for documents and messages: relative to the working directory when it is
+    under it, else from its top-level package down (stable across installs)."""
+    path = Path(path).resolve()
+    try:
+        return path.relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        pass
+    for i, part in enumerate(path.parts):
+        if part in ("site-packages", "dist-packages"):
+            return Path(*path.parts[i + 1:]).as_posix()
+    return path.as_posix()
 
 
 @dataclass(frozen=True)
@@ -40,11 +69,22 @@ class IsaPack:
     spec: Path
     programs: Path
     arch: Path
-    docs: Path
     model: str  # "module:callable" returning a Dut
     demand: str  # module with units_used / bit_shares / fifos
     ext: str = ".pio"  # source file suffix
     rank: int = 100  # lowest discovered rank is the default pack
+    #: Where generated documents go; relative paths are against the working directory.
+    #: Default: docs/<name>.
+    docs: Path | None = None
+
+    def __post_init__(self) -> None:
+        if self.docs is None:
+            object.__setattr__(self, "docs", Path("docs") / self.name)
+
+    @property
+    def docs_dir(self) -> Path:
+        assert self.docs is not None
+        return self.docs if self.docs.is_absolute() else Path.cwd() / self.docs
 
     def demand_module(self) -> ModuleType:
         return importlib.import_module(self.demand)
@@ -61,6 +101,9 @@ class IsaPack:
 
 @cache
 def packs() -> dict[str, IsaPack]:
+    """Every pack: the built-in sub-packages, then the installed entry points."""
+    from importlib.metadata import entry_points
+
     found: dict[str, IsaPack] = {}
     for m in pkgutil.iter_modules(__path__):
         if not m.ispkg:
@@ -68,6 +111,13 @@ def packs() -> dict[str, IsaPack]:
         pack = getattr(importlib.import_module(f"{__name__}.{m.name}"), "PACK", None)
         if isinstance(pack, IsaPack):
             found[pack.name] = pack
+    for ep in entry_points(group=ENTRY_POINTS):
+        pack = ep.load()
+        if not isinstance(pack, IsaPack):
+            raise TypeError(f"entry point {ep.name} = {ep.value} is not an IsaPack")
+        if pack.name in found and found[pack.name] is not pack:
+            raise ValueError(f"two ISA packs are called '{pack.name}'")
+        found[pack.name] = pack
     return dict(sorted(found.items(), key=lambda kv: (kv[1].rank, kv[0])))
 
 
@@ -120,5 +170,5 @@ def select(name: str | None) -> None:
         _override[:] = [name]
 
 
-__all__ = ["ENV", "ROOT", "IsaPack", "active", "for_image", "for_path", "get", "packs", "select",
-           "use"]
+__all__ = ["ENTRY_POINTS", "ENV", "IsaPack", "active", "display_path", "for_image", "for_path",
+           "get", "pack_dir", "packs", "select", "use"]

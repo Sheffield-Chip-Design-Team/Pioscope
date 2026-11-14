@@ -14,7 +14,7 @@ These choices decide the engine's area and how much of it sits idle. Comparing t
 - **Static allocation only.** A runtime meta-controller is time-sharing, which is out of scope for this analytic model (ADR-0011 brings it into the cycle-accurate models). It stays an extension point. A mesh allocation can later be re-run at a frame boundary without changing this model.
 - **Metrics: area and utilisation.**
   - Area is in gate equivalents (GE; 1 GE = `sg13g2_nand2_1`, 7.2576 µm²).
-  - Flip-flop, mux and SRAM-macro areas come from the IHP SG13G2 PDK (the stdcell LEF and the SRAM datasheets; see the pack's `spec/arch/<pack>/cost.yaml`). The block costs (core, units, FIFO control, link width) are placeholders, so the report re-ranks the architectures with each one scaled ×0.5 and ×2.
+  - Flip-flop, mux and SRAM-macro areas come from the IHP SG13G2 PDK (the stdcell LEF and the SRAM datasheets; see the pack's `<pack>/arch/cost.yaml`). The block costs (core, units, FIFO control, link width) are placeholders, so the report re-ranks the architectures with each one scaled ×0.5 and ×2.
   - Utilisation is reported as allocated share (resources assigned to some program) and active share (estimated busy fraction).
 - **Inputs.**
   - Demand comes from the assembled programs (`pioscope/arch/demand.py` with the pack's `demand` hooks): imem words, units, FIFOs, pads, and the share of bit-times each unit is busy.

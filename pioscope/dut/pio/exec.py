@@ -1,4 +1,4 @@
-"""PIO instruction handlers: exactly one per instruction in spec/isa/pio.yaml, keyed by
+"""PIO instruction handlers: exactly one per instruction in pioscope/packs/pio/isa.yaml, keyed by
 its name (pioscope/packs/pio/tests check the set).
 
 A handler is called with (sm, instruction, first) on each SM cycle the instruction is

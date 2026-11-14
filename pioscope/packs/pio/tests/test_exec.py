@@ -1,5 +1,5 @@
 """Directed tests of the PIO model, one or more per instruction (agreement #6), against
-the RP2040 datasheet's semantics (spec/isa/pio.yaml)."""
+the RP2040 datasheet's semantics (pioscope/packs/pio/isa.yaml)."""
 
 from __future__ import annotations
 
