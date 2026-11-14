@@ -121,7 +121,7 @@ pioscope/                       # Python package
   cli.py                   # the `pioscope` command
   tests/                   # framework tests
 test/                      # Tiny Tapeout cocotb flow (tb.v, test.py, Makefile)
-tools/vscode-pioscope/       # VS Code extension: highlighting for every pack + the debugger
+pioscope/vscode/       # VS Code extension: highlighting for every pack + the debugger
 ```
 
 ### CLI
