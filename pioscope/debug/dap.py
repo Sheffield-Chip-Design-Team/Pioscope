@@ -1,7 +1,7 @@
 """`pioscope dap`: a Debug Adapter Protocol server (stdio) for VS Code, over DebugSession.
 
 No dependencies: DAP messages are JSON with a `Content-Length` header. The VS Code
-side is the small extension in tools/vscode-pioscope/, which starts `uv run pioscope dap`.
+side is the small extension in pioscope/vscode/, which starts `uv run pioscope dap`.
 
 Mapping to the debugger:
   Continue -> cont      Step Over (next) -> step (one instruction)
