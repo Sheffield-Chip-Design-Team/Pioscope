@@ -31,6 +31,17 @@ def render(data: dict[str, Any]) -> str:
     page = TEMPLATE.read_text()
     if page.count("__DATA__") != 1:
         raise ValueError(f"{TEMPLATE.name} must contain exactly one __DATA__ placeholder")
+    from pioscope.arch.report import _paths
     from pioscope.packs import active
 
-    return page.replace("__TITLE__", html.escape(active().title)).replace("__DATA__", blob)
+    docs = _paths()[3]
+
+    def ref(text: str, path: str) -> str:
+        if docs is None:  # a downstream project: PIOScope's docs are not here
+            return f"{html.escape(text)} (PIOScope docs/{html.escape(path)})"
+        return f'<a href="{html.escape(docs)}/{html.escape(path)}">{html.escape(text)}</a>'
+
+    return (page.replace("__TITLE__", html.escape(active().title))
+            .replace("__GUIDE__", ref("arch-guide.md", "arch-guide.md"))
+            .replace("__ADR7__", ref("ADR-0007", "open_items/0007-architecture-study.md"))
+            .replace("__DATA__", blob))
