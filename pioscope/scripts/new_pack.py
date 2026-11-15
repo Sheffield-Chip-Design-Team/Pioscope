@@ -289,17 +289,34 @@ def pack() -> Iterator[IsaPack]:
 
 TEST_PACK = '''"""The @NAME@ pack assembles, runs, and implements every instruction of its yaml."""
 
-from pioscope.asm import assemble_file
+import pytest
+from pioscope.asm import assemble, assemble_file
 from pioscope.bench.pads import PadIn
 from pioscope.isa import load_isa
+from pioscope.isa.check import Check, check_pack
 from pioscope.packs import get
-from @PKG@.model import HANDLERS, Engine
+
+from @PKG@.model import Engine
 
 PACK = get("@NAME@")
 
 
-def test_every_instruction_has_a_handler() -> None:
-    assert set(HANDLERS) == set(load_isa(PACK.spec).instructions)
+@pytest.mark.parametrize("check", check_pack(PACK), ids=lambda c: c.name)
+def test_isa_check(check: Check) -> None:
+    """Handlers, directives, semantics text, programs, usage, generated docs
+    (`pioscope --isa @NAME@ isa-check`)."""
+    assert check.ok, check.report()
+
+
+def test_jmp_x_decrement_loop_then_nop() -> None:
+    """Directed test of jmp (x-- takes the branch while X != 0, then wraps X) and nop."""
+    src = ".program t\\n.pins led=uo0\\nset x, 2\\nloop: jmp x-- loop\\nnop\\nhalt: jmp halt\\n"
+    dut = Engine()
+    dut.load(assemble(src, f"t{PACK.ext}", load_isa(PACK.spec)))
+    dut.reset()
+    for _ in range(1 + 3 + 1):  # set, three jmps (X = 2, 1, 0), nop
+        dut.step(PadIn())
+    assert dut.cores[0].pc == 3 and dut.cores[0].x == 0xFFFF_FFFF
 
 
 def test_blink_toggles_the_led() -> None:

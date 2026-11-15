@@ -4,7 +4,7 @@
 
 PIOScope is a pre-RTL toolkit for PIO-style programmable IO engines, like the RP2040's PIO. You describe an instruction set in one yaml file, and you get:
 - an **assembler** with good errors;
-- a **cycle-accurate engine model**;
+- a **pin-timing-accurate engine model**;
 - a **verification bench** with bus device models and independent waveform decoders;
 - a GDB-style and **VS Code debugger**;
 - waveforms;
@@ -36,7 +36,8 @@ An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs
 
 ```bash
 uv sync && uv run pytest                      # environment + test suite
-uv run pioscope --help                          # asm, sim, debug, dap, rtl, metrics, isa-docs, arch, vscode, new-pack
+uv run pioscope --help                          # asm, sim, debug, dap, rtl, metrics, isa-docs, isa-check, arch, vscode, new-pack
+uv run pioscope isa-check -v                    # yaml vs model handlers, directives, programs, tests, docs
 uv run pioscope asm pioscope/packs/pio/programs/uart_tx.pio --listing build/uart_tx.lst
 uv run pioscope sim pioscope/packs/pio/programs/uart_rx.pio --dut engine --device uart_partner \
     --baud 115200 --uart-send 0x55 --trace --vcd build/rx.vcd

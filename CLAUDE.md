@@ -102,7 +102,7 @@ docs/
   open_items/              # ADRs: one file per decision
   pio/                     # the PIO pack: machine-model.md + generated isa.md, isa-encoding.*, arch-study.*
 pioscope/                  # the Python package (installable; everything below ships in the wheel)
-  isa/                     # loads a pack's yaml
+  isa/                     # loads a pack's yaml; check.py: `pioscope isa-check`
   asm/                     # lexer, operands, directives, encoder (hook), expressions, listing, errors
   image.py                 # ProgramImage (IR + words + config + pack) <-> JSON / hex
   wave.py                  # Waveform (the only module decoders may import)
@@ -131,6 +131,7 @@ Other packs live in their own packages and register through the `pioscope.packs`
 - `pioscope asm prog.pio -o prog.json --listing prog.lst [--hex DIR]`: instruction words + config image + listing. The suffix picks the pack.
 - `pioscope sim prog.pio|prog.json --dut engine --device uart_partner --baud 115200 --vcd out.vcd [--trace]`: run with a device model attached.
 - `pioscope debug prog.pio --device uart_partner --baud 115200`: GDB-style stepping. `pioscope dap` backs the VS Code extension (`docs/debugging.md`).
+- `pioscope isa-check [--all] [-v]`: checks the pack's yaml against its model's handlers, directive handlers, semantics text, programs, directed tests and generated docs (agreements #1 and #6); exit 1 on a gap. The pack tests run the same checks (`pioscope.isa.check`).
 - `pioscope rtl --scenario mod:factory` (cocotb), `pioscope metrics`, `pioscope isa-docs`, `pioscope arch [--write]`. `pioscope vscode` builds the VS Code extension; `pioscope new-pack NAME` scaffolds a new ISA pack project. `pioscope --help` lists all, and `pioscope --isa PACK …` picks the pack.
 
 ---

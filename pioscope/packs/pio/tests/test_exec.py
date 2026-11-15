@@ -7,7 +7,7 @@ import pytest
 
 from pioscope.asm import assemble
 from pioscope.bench.pads import PadIn
-from pioscope.dut.pio import HANDLERS, PioEngine, PioSm
+from pioscope.dut.pio import PioEngine, PioSm
 from pioscope.isa import load_isa
 from pioscope.packs import get
 
@@ -31,10 +31,6 @@ def sm(e: PioEngine) -> PioSm:
 def run(e: PioEngine, cycles: int, ui: int = 0, uio: int = 0) -> None:
     for _ in range(cycles):
         e.step(PadIn(ui=ui, uio_in=uio))
-
-
-def test_every_instruction_has_a_handler() -> None:
-    assert set(HANDLERS) == set(ISA.instructions)
 
 
 # ---- jmp ------------------------------------------------------------------------------

@@ -12,7 +12,7 @@ import pioscope.packs as packs_mod
 from pioscope.asm import assemble_file
 from pioscope.bench.pads import PadIn
 from pioscope.cli import main
-from pioscope.isa import load_isa
+from pioscope.isa.check import check_pack
 from pioscope.scripts.new_pack import scaffold
 
 
@@ -60,7 +60,8 @@ def test_generated_pack_assembles_and_runs(tmp_path: Path, monkeypatch: pytest.M
     try:
         with packs_mod.use("gen"):
             model = importlib.import_module("gen_isa.model")
-            assert set(model.HANDLERS) == set(load_isa(pack.spec).instructions)
+            bad = [c.report() for c in check_pack(pack) if not c.ok]
+            assert not bad, "\n".join(bad)
             image = assemble_file(pack.program("blink"))
             dut = model.Engine()
             dut.load(image)

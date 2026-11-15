@@ -255,6 +255,12 @@ def _isa_docs(argv: Sequence[str]) -> int:
     return docs_main(list(argv))
 
 
+def _isa_check(argv: Sequence[str]) -> int:
+    from pioscope.isa.check import main as check_main
+
+    return check_main(list(argv))
+
+
 def _debug(argv: Sequence[str]) -> int:
     from pioscope.debug.repl import debug_main
 
@@ -292,6 +298,8 @@ COMMANDS: dict[str, tuple[Callable[[Sequence[str]], int], str]] = {
     "rtl": (rtl_main, "run a scenario against RTL through cocotb"),
     "metrics": (_metrics, "per-program static ISA metrics"),
     "isa-docs": (_isa_docs, "regenerate the active pack's isa.md + isa-encoding.adoc/.html"),
+    "isa-check": (_isa_check, "check the pack's yaml against its model, directives, programs "
+                              "and docs"),
     "debug": (_debug, "step through a program on its ISA pack's engine model, GDB style"),
     "dap": (_dap, "Debug Adapter Protocol server for VS Code (the `vscode` extension)"),
     "vscode": (_vscode, "build the VS Code extension (.vsix) for the installed ISA packs"),

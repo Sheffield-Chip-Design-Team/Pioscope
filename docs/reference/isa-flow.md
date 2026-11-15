@@ -98,19 +98,31 @@ Operand keys:
 
    With `strict: false`, an instruction that doesn't fit gets `None` as its word plus a warning.
 7. **Image** (`pioscope/image.py`). `ProgramImage` holds `instructions` (IR, authoritative), `words`, `config`, `symbols`, `source`, `warnings`, `isa_pack` and `word_bits`, and round-trips to JSON.
-8. **Execute**: the pack's model has one `@handler("name")` per instruction, and the pack's tests check that the set matches the yaml.
-9. **Docs** (`pioscope --isa <pack> isa-docs`). Regenerates `docs/<pack>/isa.md`, `isa-encoding.adoc` and `isa-encoding.html`. Each pack's tests fail when any of them is stale.
+8. **Execute**: the pack's model has one `@handler("name")` per instruction, and `pioscope isa-check` checks that the set matches the yaml (§3).
+9. **Docs** (`pioscope --isa <pack> isa-docs`). Regenerates `docs/<pack>/isa.md`, `isa-encoding.adoc` and `isa-encoding.html`. `pioscope isa-check` fails when any of them is stale.
 
 ---
 
 ## 3. Which test guards what (PIO pack)
 
+`pioscope [--isa PACK] isa-check` checks a pack's yaml against everything that consumes it, with no pytest needed (`--all` checks every installed pack, `-v` adds a per-instruction table). It exits 1 on any failure:
+
+| Check | Fails when | Fix by |
+|---|---|---|
+| `spec` | the yaml doesn't load or validate | the yaml |
+| `instruction handlers` | an instruction has no `@handler` in the model's `HANDLERS`, or a handler names no instruction | add or rename the handler |
+| `directive handlers` | a directive has no assembler handler | add the handler (`DIRECTIVE_HANDLERS`) |
+| `semantics text` | an instruction or directive has empty `semantics:` | write it (agreement #6) |
+| `programs assemble` | a program in `<pack>/programs` doesn't assemble | the program, or the spec |
+| `instructions used` | no program or directed test (`<pkg>/tests`, `tests/`) uses an instruction | add a directed test |
+| `generated docs` | `docs/<pack>/isa.md`, `isa-encoding.adoc` or `.html` is stale (skipped where the docs are absent) | `uv run pioscope --isa <pack> isa-docs` |
+
+The same checks are the pack's `test_isa_check` tests (`pioscope.isa.check.check_pack`), so the command and `pytest` can't disagree. For PIO:
+
 | If you change… | These tests react | Fix by |
 |---|---|---|
-| any of `pio.yaml` | `pioscope/packs/pio/tests/test_isa.py` (loads, handlers, stale docs) | `uv run pioscope --isa pio isa-docs` |
+| any of `pio.yaml` | `pioscope/packs/pio/tests/test_isa.py::test_isa_check[...]` (the table above) | see the table above |
 | an instruction or its encoding | `test_encode.py` (pioasm output, datasheet forms, round trips) | the encoder, or the spec |
-| a mnemonic | `test_isa.py::test_every_instruction_is_used_by_a_program_or_test`, `test_exec.py::test_every_instruction_has_a_handler` | add a directed test and a handler |
-| a directive | `test_isa.py::test_every_directive_has_a_handler` | add the handler |
 | semantics in the model | `test_exec.py`, `test_scenarios.py` | a directed test per behaviour |
 
 Golden files (listings, error messages), where a pack has them, are rewritten with `uv run pytest --update-golden`. **Read the diff** before you commit them.
@@ -133,6 +145,7 @@ A pack that models an existing ISA (PIO) changes only to match that ISA more clo
 4. Add a handler `@handler("name")` in the pack's model, and directed tests.
 5. Regenerate the docs (`pioscope --isa <pack> isa-docs`) and the goldens, and review every diff.
 6. Add it to a protocol program if one uses it.
+7. Run `pioscope --isa <pack> isa-check`: it should report all ok.
 
 **Change operands or a type:** update the YAML, the directed tests and the handler (it reads `ins.operands[...]`), then regenerate docs and goldens.
 

@@ -4,6 +4,18 @@ All notable changes to PIOScope. Versions follow [semantic versioning](https://s
 before 1.0 the `IsaPack`, hooks and `pioscope.dut.core` APIs may still change between minor
 versions.
 
+## Unreleased
+
+### Added
+- `pioscope isa-check [--all] [-v]`: checks a pack's yaml against its engine model's `HANDLERS`
+  (missing and extra), its directive handlers, semantics text, programs, directed tests and
+  generated docs; exits 1 on any gap. `pioscope.isa.check.check_pack` is the same set of checks
+  for a pack's tests.
+
+### Changed
+- The PIO pack tests and the `new-pack` scaffold run their ISA coverage through `check_pack`.
+  The scaffold also gains a directed test of `jmp` and `nop`, which it lacked.
+
 ## 0.2.0 (2026-11-14)
 
 PIOScope becomes an installable library. Your ISA lives in your own package; PIOScope finds it
