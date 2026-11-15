@@ -1,6 +1,6 @@
 ![](../../workflows/ci/badge.svg)
 
-# PIOScope: a framework for designing programmable-IO instruction sets
+# PIO-Scope: a framework for designing programmable-IO instruction sets
 
 PIOScope is a pre-RTL toolkit for PIO-style programmable IO engines, like the RP2040's PIO. You describe an instruction set in one yaml file, and you get:
 - an **assembler** with good errors;
