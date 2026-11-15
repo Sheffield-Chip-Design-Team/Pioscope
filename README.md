@@ -12,7 +12,7 @@ PIOScope is a pre-RTL toolkit for PIO-style programmable IO engines, like the RP
 
 The question it answers is whether an instruction set suits real serial protocols, before any RTL is written: correct, on time, and at a sensible cost.
 
-An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs.md)). The example pack is the **RP2040 PIO**:
+An instruction set is an **ISA pack** ([ISA PACKS EXPLAINED](docs/open_items/0012-isa-packs.md)). The example pack is the **RP2040 PIO**:
 - `pioscope/packs/pio/isa.yaml`: the nine instructions in pioasm syntax;
 - the exact 16-bit encoding (words match pioasm);
 - a state-machine model with autopull/autopush, shift directions, `exec`, FIFO joins and IRQ flags;
@@ -22,7 +22,7 @@ An instruction set is an **ISA pack** ([ADR-0012](docs/open_items/0012-isa-packs
 
 | Area | What it does | Read |
 |---|---|---|
-| **ISA packs** | spec yaml + optional hooks (directives, binary encoder) + engine model + programs + arch data; the framework names no instruction | [ADR-0012](docs/open_items/0012-isa-packs.md), [isa-flow.md](docs/reference/isa-flow.md) |
+| **ISA packs** | spec yaml + optional hooks (directives, binary encoder) + engine model + programs + arch data; the framework names no instruction | [isa-packs.md](docs/open_items/0012-isa-packs.md), [isa-flow.md](docs/reference/isa-flow.md) |
 | **Assembler** | table-driven from the yaml; `.define` and integer expressions; listings; errors with file:line:column, what was expected and a hint | [isa-flow.md](docs/reference/isa-flow.md), [pio/isa.md](docs/pio/isa.md), [pio/isa-encoding.html](docs/pio/isa-encoding.html) |
 | **Engine core + PIO model** | registers, FIFOs, pins, side-set, delay, wrap, fractional clock divider, units; one handler per instruction | [simulator.md](docs/reference/simulator.md), [pio/machine-model.md](docs/pio/machine-model.md) |
 | **Verification bench** | nets with wired-AND and contention checks, device models (UART, SPI, I²C master/slave), independent decoders, async device clocks, timing checks, a Python backend and a cocotb/RTL backend with proven parity | [bench.md](docs/bench.md) |
