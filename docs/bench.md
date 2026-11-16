@@ -43,6 +43,7 @@ Scenarios that need an engine (`requires_engine`, the default) run on the engine
 - the assembler;
 - the board;
 - device↔device loopbacks for UART, SPI and I²C, including stretching, NACK and arbitration;
+- CAN node↔node loopbacks: arbitration, ACK, injected stuff/CRC/form/bit errors, error-passive and bus-off, clock tolerance (`pioscope/tests/devices/test_can.py`);
 - decoders and checks;
 - backend parity.
 

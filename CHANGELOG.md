@@ -11,6 +11,11 @@ versions.
   (missing and extra), its directive handlers, semantics text, programs, directed tests and
   generated docs; exits 1 on any gap. `pioscope.isa.check.check_pack` is the same set of checks
   for a pack's tests.
+- CAN: a `CanNode` device model (`pioscope.devices.can`: CAN 2.0A/B data and remote frames,
+  stuffing, CRC-15, arbitration, ACK, error frames and fault confinement up to bus-off, hard
+  sync and resync, per-node clock error, injected stuff/CRC/form/bit errors) and an independent
+  decoder, `decode_can` (`pioscope.decoders.can`). Node↔node loopbacks: `can_link`, `can_bus`
+  and `can_arbitration` in `pioscope.tests.devices.loopbacks`.
 
 ### Changed
 - The PIO pack tests and the `new-pack` scaffold run their ISA coverage through `check_pack`.

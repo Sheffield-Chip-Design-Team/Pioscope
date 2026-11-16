@@ -7,10 +7,14 @@ traffic also passes through the HDL testbench's ui_in.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from typing import Any
 
 from pioscope.bench import Attach, NetSpec, Scenario, Wiring
 from pioscope.devices import (
+    CanFrame,
+    CanNode,
+    CanTiming,
     I2cMaster,
     I2cOp,
     I2cSlave,
@@ -92,3 +96,42 @@ def i2c_arbitration(half: int = 25) -> Scenario:
     return Scenario("i2c_arbitration", _i2c_wiring(),
                     [Attach(x, {"scl": "scl", "sda": "sda"}) for x in (a, b, s)],
                     max_cycles=4 * 9 * 2 * half + 2000, requires_engine=False)
+
+
+# ---- CAN -------------------------------------------------------------------------------
+
+CAN_FRAMES = (CanFrame(0x123, bytes([0xDE, 0xAD])), CanFrame(0x1ABCDE01, b"\x11", ext=True),
+              CanFrame(0x7FF, rtr=True, dlc=4), CanFrame(0x000, bytes(8)))
+
+
+def can_bus(nodes: Mapping[str, Mapping[str, Any]], bitrate: float = 1_000_000,
+            sjw: int = 1, max_bits: int = 4000) -> Scenario:
+    """CAN nodes on one open-drain net `can`. `nodes` maps a name to CanNode keyword
+    arguments, plus `ppm` for that node's clock error. Stops when every node is idle
+    with nothing left to send."""
+    devs = []
+    for name, kw in nodes.items():
+        kw = dict(kw)
+        ppm = kw.pop("ppm", 0.0)
+        devs.append(CanNode(name, CanTiming(bitrate, sjw=sjw, ppm=ppm), **kw))
+    names = list(nodes)
+    return Scenario("can_bus", Wiring({"can": NetSpec(pad="ui7", pull=1)}),
+                    [Attach(d, {"bus": "can"}) for d in devs],
+                    max_cycles=int(max_bits * 50e6 / bitrate), requires_engine=False,
+                    until=lambda s: all(s.devices[n].quiet for n in names))  # type: ignore[attr-defined]
+
+
+def can_link(frames: Sequence[Any] = CAN_FRAMES, bitrate: float = 1_000_000,
+             tx_ppm: float = 0.0, rx_ppm: float = 0.0, sjw: int = 1, ack: bool = True,
+             retransmit: int | None = 8, max_bits: int = 4000) -> Scenario:
+    """Node `a` sends `frames`; node `b` receives (and ACKs unless ack=False)."""
+    return can_bus({"a": {"send": tuple(frames), "ppm": tx_ppm, "retransmit": retransmit},
+                    "b": {"ppm": rx_ppm, "ack": ack}},
+                   bitrate=bitrate, sjw=sjw, max_bits=max_bits)
+
+
+def can_arbitration() -> Scenario:
+    """Three nodes start in the same bit; the lowest identifier must win each round."""
+    return can_bus({"a": {"send": (CanFrame(0x123, b"\xA1"),)},
+                    "b": {"send": (CanFrame(0x122, b"\xB2"),)},
+                    "c": {"send": (CanFrame(0x0FF, b"\xC3"),)}})
