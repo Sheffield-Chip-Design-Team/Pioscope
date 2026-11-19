@@ -1,4 +1,9 @@
-"""CAN 2.0 node: a bus partner on one open-drain line (drive 0 = dominant, Z = recessive).
+"""CAN 2.0 node and transceiver: bus partners for a CAN controller under test.
+
+`CanNode` is a CAN controller. By default it sits on one open-drain line (drive 0 =
+dominant, Z = recessive), standing for a node with its transceiver. With
+`pins="txd_rxd"` it has the logic-side pins of a real controller instead, for use behind
+a `CanTransceiver`, which is how a chip under test connects to a CAN bus.
 
 The node works like a real CAN controller, in two layers, because what it sends
 depends on what it reads back mid-frame (arbitration, ACK, error flags):
@@ -18,8 +23,11 @@ error-passive / bus-off, the passive transmitter's ACK-error exception, suspend
 transmission, and bus-off recovery after 128 x 11 recessive bits. Not modelled: CAN
 FD, overload frames, the +8 REC rule for dominant bits after an error flag.
 
-Ports:
+Ports (`pins="bus"`, the default):
     bus     the CAN line (open drain; the board adds the pull-up and the wired-AND)
+Ports (`pins="txd_rxd"`):
+    tx      TXD to a transceiver (push-pull, 1 = recessive)
+    rx      RXD from a transceiver (the bus level)
 
 Logged transactions:
     tx_start   {id, attempt}                         this node starts a frame (SOF)
@@ -206,7 +214,7 @@ def _num(bits: Sequence[int]) -> int:
 
 
 class CanNode(Device):
-    ports = ("bus",)
+    ports: tuple[str, ...] = ("bus",)
 
     def __init__(
         self,
@@ -219,7 +227,13 @@ class CanNode(Device):
         glitches: Sequence[tuple[int, int]] = (),  # (cycle, width): pull the bus low
         bus_off_recovery: bool = True,
         seed: int = 0,
+        pins: str = "bus",  # "bus" (one open-drain line) | "txd_rxd" (behind a transceiver)
     ) -> None:
+        if pins not in ("bus", "txd_rxd"):
+            raise ValueError("pins must be 'bus' or 'txd_rxd'")
+        self.ports = ("bus",) if pins == "bus" else ("tx", "rx")
+        self._in, self._out = ("bus", "bus") if pins == "bus" else ("rx", "tx")
+        self._push_pull = pins == "txd_rxd"
         super().__init__(name, seed)
         self.timing = timing
         self.queue = [s if isinstance(s, CanSend) else CanSend(s) for s in send]
@@ -269,7 +283,7 @@ class CanNode(Device):
 
     # ---- per cycle: bit timing ------------------------------------------------------
     def tick(self) -> None:
-        lvl = self.read("bus")
+        lvl = self.read(self._in)
         if lvl not in (0, 1):
             lvl = self._prev
         if self._prev == 1 and lvl == 0:
@@ -289,7 +303,8 @@ class CanNode(Device):
             else:
                 break
         glitch = any(c <= self.cycle < c + w for c, w in self.glitches)
-        self.drive("bus", 0 if self._drv == 0 or glitch else Z)
+        dominant = self._drv == 0 or glitch
+        self.drive(self._out, 0 if dominant else (1 if self._push_pull else Z))
 
     def _edge(self) -> None:
         t = self.timing
@@ -545,3 +560,68 @@ class CanNode(Device):
             self._drv = 1
             return True
         return False
+
+
+class CanTransceiver(Device):
+    """The logic side of a CAN transceiver: TXD in, RXD out, and the bus.
+
+    A chip can't sit on a CAN bus directly (it is differential and must survive fault
+    voltages), so a controller under test talks to a transceiver: it drives TXD
+    (push-pull, 0 = dominant) and reads RXD (the bus level, its own bits included).
+    Here the bus is one open-drain net shared with other nodes (`CanNode`s), so the
+    wired-AND is the board's.
+
+    - `tx_delay_s`: TXD -> bus. `rx_delay_s`: bus -> RXD. Their sum is the loop delay a
+      controller sees between driving a bit and reading it back. Real parts are in
+      the 100-250 ns range; on top of it come cable delay and the controller's input
+      synchroniser. Both are rounded to whole sysclk cycles.
+    - `dominant_timeout_s`: if TXD stays dominant longer, the transceiver releases the
+      bus until TXD goes recessive again (as real parts do, so a stuck controller
+      can't block the bus). None turns it off.
+
+    Ports: txd (from the controller), rxd (to the controller, push-pull), bus (open drain).
+    Logged: dominant_timeout {} when the bus is released by the time-out.
+    """
+
+    ports = ("txd", "rxd", "bus")
+
+    def __init__(self, name: str, tx_delay_s: float = 100e-9, rx_delay_s: float = 100e-9,
+                 dominant_timeout_s: float | None = 1e-3, seed: int = 0) -> None:
+        super().__init__(name, seed)
+        if tx_delay_s < 0 or rx_delay_s < 0:
+            raise ValueError("delays must not be negative")
+        self.tx_delay_s, self.rx_delay_s = tx_delay_s, rx_delay_s
+        self.dominant_timeout_s = dominant_timeout_s
+        self._txq: list[int] = []
+        self._rxq: list[int] = []
+        self._dom = 0  # consecutive cycles of dominant TXD
+        self._timed_out = False
+        self._rxd = 1
+
+    def on_attach(self) -> None:
+        self.tx_cycles = round(self.seconds_to_cycles(self.tx_delay_s))
+        self.rx_cycles = round(self.seconds_to_cycles(self.rx_delay_s))
+        self._txq = [1] * self.tx_cycles
+        self._rxq = [1] * self.rx_cycles
+        t = self.dominant_timeout_s
+        self._limit = None if t is None else max(1, round(self.seconds_to_cycles(t)))
+
+    @staticmethod
+    def _level(v: object, prev: int) -> int:
+        return v if isinstance(v, int) and v in (0, 1) else prev
+
+    def tick(self) -> None:
+        txd = self._level(self.read("txd"), 1)
+        if txd == 0:
+            self._dom += 1
+            if self._limit is not None and self._dom > self._limit and not self._timed_out:
+                self._timed_out = True
+                self.emit("dominant_timeout")
+        else:
+            self._dom, self._timed_out = 0, False
+        self._txq.append(1 if self._timed_out else txd)
+        to_bus = self._txq.pop(0)
+        self.drive("bus", 0 if to_bus == 0 else Z)
+        self._rxq.append(self._level(self.read("bus"), self._rxq[-1] if self._rxq else self._rxd))
+        self._rxd = self._rxq.pop(0)
+        self.drive("rxd", self._rxd)
