@@ -1,6 +1,6 @@
 # RP2040 PIO ISA reference (generated)
 
-RP2040 PIO. Generated from `pioscope/packs/pio/isa.yaml` (version 1.0.0). Do not edit by hand: run `uv run pioscope isa-docs`. Encoding: [isa-encoding.html](isa-encoding.html).
+RP2040 PIO. Generated from `piolab/packs/pio/isa.yaml` (version 1.0.0). Do not edit by hand: run `uv run piolab isa-docs`. Encoding: [isa-encoding.html](isa-encoding.html).
 
 ## Instructions
 

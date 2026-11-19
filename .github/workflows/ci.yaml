@@ -14,5 +14,5 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv sync
       - run: uv run pytest
-      - run: uv run ruff check pioscope
+      - run: uv run ruff check piolab
       - run: uv run mypy
