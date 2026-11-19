@@ -166,3 +166,59 @@ def test_overwritten_stuff_bit_in_arbitration_is_a_bit_error(bench) -> None:  # 
     assert r.txns("a", "arb_lost") == []
     assert [(t.data["type"], t.data["role"]) for t in r.txns("a", "error")] == [("bit", "tx")]
     assert [t.data["attempt"] for t in r.txns("a", "sent")] == [2]
+
+
+# ---- a controller behind a transceiver ----------------------------------------------------
+
+from .loopbacks import can_transceiver_bus  # noqa: E402
+
+
+def test_controller_behind_transceiver_sends_and_receives(bench) -> None:  # type: ignore[no-untyped-def]
+    """TXD/RXD through a transceiver with a 200 ns loop delay: frames both ways, ACKed."""
+    out, back = CanFrame(0x123, b"\xDE\xAD"), CanFrame(0x321, b"\x42")
+    r = bench(functools.partial(can_transceiver_bus, controller={"send": (out,)},
+                                nodes={"b": {"send": (back,), "start_delay_bits": 200}}))
+    no_conflicts(r)
+    assert _frames(r, "b", "rx") == _expected([out])
+    assert _frames(r, "ctl", "rx") == _expected([back])
+    assert _errors(r, "ctl") == [] and _errors(r, "b") == []
+    assert [(f.id, f.acked) for f in decode_can(r.waveform, "can", 1_000_000)] == \
+        [(0x123, True), (0x321, True)]
+    # RXD is the bus, delayed: the controller's own frame comes back on it
+    rx_frames = decode_can(r.waveform, "rxd", 1_000_000)
+    assert [f.id for f in rx_frames][:1] == [0x123]
+
+
+def test_arbitration_through_the_transceiver(bench) -> None:  # type: ignore[no-untyped-def]
+    """The loop delay is inside the sample point, so a controller behind a transceiver
+    still loses arbitration cleanly to a lower identifier and resends afterwards."""
+    r = bench(functools.partial(can_transceiver_bus,
+                                controller={"send": (CanFrame(0x123, b"\x01"),)},
+                                nodes={"b": {"send": (CanFrame(0x122, b"\x02"),)}}))
+    assert [t.data["id"] for t in r.txns("ctl", "arb_lost")] == [0x123]
+    assert [f.id for f in decode_can(r.waveform, "can", 1_000_000)] == [0x122, 0x123]
+    assert _errors(r, "ctl") == [] and _errors(r, "b") == []
+
+
+def test_loop_delay_past_the_sample_point_breaks_transmission(bench) -> None:  # type: ignore[no-untyped-def]
+    """The controller reads its own bits back late: at 1 Mbit/s with the sample point at
+    80 %, a loop delay of 0.9 us lands the read-back in the next bit, a bit error."""
+    r = bench(functools.partial(can_transceiver_bus,
+                                controller={"send": (CanFrame(0x0F0, b"\x0F"),), "retransmit": 0},
+                                nodes={"b": {}}, tx_delay_s=450e-9, rx_delay_s=450e-9))
+    assert "bit" in _errors(r, "ctl")
+    assert r.txns("ctl", "sent") == []
+
+
+def test_dominant_timeout_releases_the_bus(bench) -> None:  # type: ignore[no-untyped-def]
+    """A controller stuck dominant (here a 2000-cycle glitch on TXD) can't hold the bus:
+    the transceiver releases it after the time-out, and the other nodes recover."""
+    r = bench(functools.partial(can_transceiver_bus, controller={"glitches": ((1000, 2000),)},
+                                nodes={"b": {"send": (CanFrame(0x55, b"\x01"),),
+                                             "start_delay_bits": 80}},
+                                dominant_timeout_s=10e-6))
+    assert len(r.txns("xcvr", "dominant_timeout")) == 1
+    bus = r.waveform
+    # 10 us = 500 cycles of dominant TXD, plus the TXD -> bus delay: released by ~1610
+    assert bus.at("can", 1800) == 1 and bus.at("txd", 1800) == 0
+    assert [t.data["id"] for t in r.txns("ctl", "rx")] == [0x55]
