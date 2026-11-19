@@ -1,6 +1,6 @@
 # Tutorial 04: add a unit
 
-**You will:** write a hardware unit, attach it to a core of the PIO model, and debug it, without editing the engine core or the tools. **Code:** [`pioscope/examples/edge_counter.py`](../../sim/examples/edge_counter.py).
+**You will:** write a hardware unit, attach it to a core of the PIO model, and debug it, without editing the engine core or the tools. **Code:** [`piolab/examples/edge_counter.py`](../../piolab/examples/edge_counter.py).
 
 ## The unit interface
 
@@ -29,15 +29,17 @@ class EdgeCountingEngine(PioEngine):
 ## Run it
 
 ```bash
-uv run pioscope debug --scenario pioscope.examples.pulse_counter:blink_scenario \
-    --dut pioscope.examples.edge_counter:EdgeCountingEngine --vcd build/edges.vcd
-(pioscope) stepi 1000
-(pioscope) info units edge_counter      # edges=5
-(pioscope) watch units.edge_counter.edges
-(pioscope) continue                     # stops at the next edge
+uv run piolab debug --scenario piolab.examples.pulse_counter:blink_scenario \
+    --dut piolab.examples.edge_counter:EdgeCountingEngine --vcd build/edges.vcd
+(piolab) stepi 1000
+(piolab) info units edge_counter      # edges=5
+(piolab) watch units.edge_counter.edges
+(piolab) continue                     # stops at the next edge
 ```
 
-In VS Code, add `"dut": "pioscope.examples.edge_counter:EdgeCountingEngine"` to the Blink configuration from tutorial 01. Open Variables → Units → edge_counter. In GTKWave, the unit has its own sub-group under sm0.
+In VS Code, add `"dut": "piolab.examples.edge_counter:EdgeCountingEngine"` to the Blink configuration from tutorial 01. Open Variables → Units → edge_counter. In GTKWave, the unit has its own sub-group under sm0.
+
+`--dut module:callable` runs any model, wherever it lives. In your own pack, put such a variant in its own folder, `<pkg>/models/<name>/`, and it becomes one of the pack's models: `piolab models` lists it, `-m <name>` runs it, and `isa-check` checks its handlers ([tutorial 05](05-your-own-pack.md)).
 
 ## A unit that instructions use
 
