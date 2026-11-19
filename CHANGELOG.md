@@ -41,6 +41,10 @@ defaults in `pyproject.toml`, and the run commands get shorter (ADR-0015).
   sync and resync, per-node clock error, injected stuff/CRC/form/bit errors) and an independent
   decoder, `decode_can` (`piolab.decoders.can`). Node↔node loopbacks: `can_link`, `can_bus`
   and `can_arbitration` in `piolab.tests.devices.loopbacks`.
+- `CanTransceiver`: the logic side of a CAN transceiver (TXD in, RXD out, the bus open
+  drain), with TXD -> bus and bus -> RXD delays and a TXD dominant time-out. `CanNode` gains
+  `pins="txd_rxd"` to sit behind one, the way a chip under test meets a CAN bus. Loopback
+  `can_transceiver_bus`; tests for the loop delay, arbitration and the time-out.
 - `piolab isa-check [--all] [-v]`: checks a pack's yaml against its engine models' `HANDLERS`
   (missing and extra), its directive handlers, semantics text, programs, directed tests and
   generated docs; exits 1 on any gap. `piolab.isa.check.check_pack` is the same set of checks
