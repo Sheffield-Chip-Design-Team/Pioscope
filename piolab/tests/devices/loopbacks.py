@@ -15,6 +15,7 @@ from piolab.devices import (
     CanFrame,
     CanNode,
     CanTiming,
+    CanTransceiver,
     I2cMaster,
     I2cOp,
     I2cSlave,
@@ -135,3 +136,26 @@ def can_arbitration() -> Scenario:
     return can_bus({"a": {"send": (CanFrame(0x123, b"\xA1"),)},
                     "b": {"send": (CanFrame(0x122, b"\xB2"),)},
                     "c": {"send": (CanFrame(0x0FF, b"\xC3"),)}})
+
+
+def can_transceiver_bus(nodes: Mapping[str, Mapping[str, Any]],
+                        controller: Mapping[str, Any] | None = None,
+                        tx_delay_s: float = 100e-9, rx_delay_s: float = 100e-9,
+                        dominant_timeout_s: float | None = 1e-3, bitrate: float = 1_000_000,
+                        sample_tq: int = 8, max_bits: int = 4000) -> Scenario:
+    """Controller `ctl` (a CanNode with TXD/RXD pins) behind transceiver `xcvr`, plus
+    `nodes` on the bus net `can`: the way a chip under test meets a CAN bus. Board-only
+    nets `txd`, `rxd` join the controller and the transceiver."""
+    timing = CanTiming(bitrate, sample_tq=sample_tq)
+    ctl = CanNode("ctl", timing, pins="txd_rxd", **dict(controller or {}))
+    xcvr = CanTransceiver("xcvr", tx_delay_s, rx_delay_s, dominant_timeout_s)
+    devs = [Attach(ctl, {"tx": "txd", "rx": "rxd"}),
+            Attach(xcvr, {"txd": "txd", "rxd": "rxd", "bus": "can"})]
+    names = ["ctl"]
+    for name, kw in nodes.items():
+        devs.append(Attach(CanNode(name, CanTiming(bitrate), **kw), {"bus": "can"}))
+        names.append(name)
+    wiring = Wiring({"can": NetSpec(pad="ui7", pull=1), "txd": NetSpec(), "rxd": NetSpec()})
+    return Scenario("can_transceiver_bus", wiring, devs,
+                    max_cycles=int(max_bits * 50e6 / bitrate), requires_engine=False,
+                    until=lambda s: all(s.devices[n].quiet for n in names))  # type: ignore[attr-defined]
