@@ -1,25 +1,55 @@
 # Changelog
 
-All notable changes to PIOScope. Versions follow [semantic versioning](https://semver.org);
-before 1.0 the `IsaPack`, hooks and `pioscope.dut.core` APIs may still change between minor
-versions.
+All notable changes to PIOLab (called PIOScope up to 0.2.0). Versions follow
+[semantic versioning](https://semver.org); before 1.0 the `IsaPack`, hooks and
+`piolab.dut.core` APIs may still change between minor versions.
 
-## Unreleased
+## 0.3.0 (unreleased)
+
+PIOScope is renamed **PIOLab**. Packs can hold several engine models, a project sets its
+defaults in `pyproject.toml`, and the run commands get shorter (ADR-0015).
+
+### Changed (breaking)
+- Renamed everywhere, with no compatibility alias: the distribution and package `piolab`,
+  the `piolab` command, the `piolab.packs` entry-point group, the `piolab` pytest plugin,
+  `$PIOLAB_ISA` and the other `PIOLAB_*` variables, the `PIOLAB_IMEM_PATH` Verilog macro,
+  `sim_build/piolab_<sim>`, the `(piolab)` debugger prompt, and in VS Code the `piolab`
+  debug type, the `piolab-asm` language and the `piolab.adapterCommand/adapterArgs` settings.
+- `IsaPack(model=...)` is replaced by `models={name: "module:callable"}` and `default_model`;
+  `discover_models("<pkg>.models")` finds one model per sub-package.
+- The PIO model moved from `piolab.dut.pio` to `piolab.packs.pio.models.base`. The PIO
+  pack is the demonstration pack, with rank 1000, so an installed project pack is the
+  default.
+- `piolab sim` runs the engine model by default (`--dut stub` for the stand-in).
+- Device options are specs: `--device uart:baud=N,send=0x55,0x41,ppm=N,bits=N,parity=P,stop=N`,
+  `spi:mode=N`, `i2c:addr=N,stretch=N` (`-d` for short). The flags `--baud`, `--ppm`,
+  `--uart-send`, `--mode`, `--i2c-addr` and `--stretch`, and the launch.json keys `baud`,
+  `ppm`, `uartSend`, `spiMode`, `i2cAddr` and `stretch`, are gone.
+- `piolab asm` without `-o` writes `<out>/<name>.json` (default `build/`).
 
 ### Added
-- `pioscope isa-check [--all] [-v]`: checks a pack's yaml against its engine model's `HANDLERS`
-  (missing and extra), its directive handlers, semantics text, programs, directed tests and
-  generated docs; exits 1 on any gap. `pioscope.isa.check.check_pack` is the same set of checks
-  for a pack's tests.
-- CAN: a `CanNode` device model (`pioscope.devices.can`: CAN 2.0A/B data and remote frames,
+- `[tool.piolab]` project config: `pack`, `model`, `cycles`, `out`, `docs` and
+  `[tool.piolab.devices]` defaults (`piolab.config`).
+- `--model/-m NAME` for `sim` and `debug`, `pytest --model`, and `"model"` in launch.json.
+  `piolab models` lists every pack's models.
+- Programs by name (`piolab sim uart_rx`), scenarios by name through the pack's new
+  `scenarios` module (`--scenario uart_tx`), `--isa` anywhere on the line, and a bare
+  `--vcd` / `--listing` writing `<out>/<name>.*`.
+- `isa-check` checks the handlers of every model of a pack.
+- CAN: a `CanNode` device model (`piolab.devices.can`: CAN 2.0A/B data and remote frames,
   stuffing, CRC-15, arbitration, ACK, error frames and fault confinement up to bus-off, hard
   sync and resync, per-node clock error, injected stuff/CRC/form/bit errors) and an independent
-  decoder, `decode_can` (`pioscope.decoders.can`). Node↔node loopbacks: `can_link`, `can_bus`
-  and `can_arbitration` in `pioscope.tests.devices.loopbacks`.
+  decoder, `decode_can` (`piolab.decoders.can`). Node↔node loopbacks: `can_link`, `can_bus`
+  and `can_arbitration` in `piolab.tests.devices.loopbacks`.
+- `piolab isa-check [--all] [-v]`: checks a pack's yaml against its engine models' `HANDLERS`
+  (missing and extra), its directive handlers, semantics text, programs, directed tests and
+  generated docs; exits 1 on any gap. `piolab.isa.check.check_pack` is the same set of checks
+  for a pack's tests.
+- The `new-pack` scaffold writes `models/base/` and a `[tool.piolab]` table, and runs its ISA
+  coverage through `check_pack`, with a directed test of `jmp` and `nop`.
 
-### Changed
-- The PIO pack tests and the `new-pack` scaffold run their ISA coverage through `check_pack`.
-  The scaffold also gains a directed test of `jmp` and `nop`, which it lacked.
+### Fixed
+- `piolab rtl --scenario` accepts dotted attributes (`mod:Class.factory`), as `sim` does.
 
 ## 0.2.0 (2026-11-14)
 

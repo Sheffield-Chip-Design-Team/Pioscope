@@ -28,7 +28,7 @@ Are shadow configuration banks needed? Which fields may change mid-frame, and at
 Include:
 - maximum rate (bits per sysclk);
 - latency (cycles from input to output);
-- per-cycle work, which must be bounded (CLAUDE.md §8 #5);
+- per-cycle work, which must be bounded (CLAUDE.md §6 #5);
 - state size in bits.
 
 ## 5. Sharing and contention

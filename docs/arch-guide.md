@@ -2,9 +2,9 @@
 
 **Intended audience:** hardware engineers who want to read, question or extend the architecture study.
 
-**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`pioscope/packs/pio/arch/`) as of 2026-11-14.
+**What this guide is not:** a results summary. Each ISA pack's results are in `docs/<pack>/arch-study.md` and, interactively, in `docs/<pack>/arch-study.html`; for the example pack, [pio/arch-study.md](pio/arch-study.md) and [pio/arch-study.html](pio/arch-study.html). The results change whenever the inputs do. This guide explains the vocabulary and the arithmetic behind them. The worked examples use the PIO pack's inputs (`piolab/packs/pio/arch/`) as of 2026-11-14.
 
-Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `pioscope/arch/`.
+Method, scope and decisions: [ADR-0007](open_items/0007-architecture-study.md). The code is in `piolab/arch/`.
 
 ---
 
@@ -44,7 +44,7 @@ A core runs **one program** at a time. The study prices it as one lump, `core` i
 
 imem holds a program's instructions.
 - **Word:** one instruction, `word_bits` in the pack's ISA yaml (16 bits on PIO).
-- **Size:** today's PIO programs are 2–22 words (`pioscope --isa pio metrics`). The RP2040 has **32 words** shared by 4 state machines.
+- **Size:** today's PIO programs are 2–22 words (`piolab --isa pio metrics`). The RP2040 has **32 words** shared by 4 state machines.
 - **Storage technology:** imem is built one of two ways, and the study picks whichever is cheaper for each configuration:
   - **flip-flops:** one `sg13g2_dfrbp_1` per bit, plus a **read mux** that selects the addressed word;
   - **SRAM macros:** blocks supplied by the IHP PDK. The smallest is 64 words × 16 bits, so a 16-bit word takes one and a 32-bit word a pair. A macro contains its own address decoder, so it needs no read mux.
@@ -76,7 +76,7 @@ Everything below applies to both cases.
 
 ## 3. Architecture families
 
-The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `pioscope/arch/arch.py` and `minimal()` in `pioscope/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
+The study compares five **families**. Each is sized to the smallest configuration that fits every workload (§7). The code is in `piolab/arch/arch.py` and `minimal()` in `piolab/arch/evaluate.py`; the one-line descriptions are `FAMILY_TEXT`.
 
 ### 3.1 PIO-style: `pio_full` and `pio_lean`
 
@@ -140,7 +140,7 @@ The study compares five **families**. Each is sized to the smallest configuratio
 
 ## 4. Allocation: the "higher-level software"
 
-Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `pioscope/arch/allocate.py`.
+Allocation happens **at load time**, before the programs run, and stays fixed while they run. Each program needs one core. The code is in `piolab/arch/allocate.py`.
 
 - **PIO** (`allocate_pio`): program *i* goes on core *i*. It fails if there are more programs than cores, or if a program needs a unit, more imem words or a deeper FIFO than a core has. With shared imem, it also fails when the programs together need more words than the memory has.
 - **Mesh** (`allocate_mesh`): each program's demand must fit inside one cluster's remaining capacity: 1 core, ⌈words / bank_words⌉ banks, its FIFOs, and one of each unit it uses. This is a small **bin-packing** problem. There are two allocators:
@@ -185,7 +185,7 @@ Two kinds of number appear throughout:
 
 ## 6. The area model
 
-The code is `area()` in `pioscope/arch/cost.py`. Notation:
+The code is `area()` in `piolab/arch/cost.py`. Notation:
 - W = words;
 - b = bits per instruction word (`word_bits`), d = bits per FIFO entry (`fifo_bits`);
 - f = flop bit (7.25 GE), m = mux bit (2.5 GE);
@@ -294,7 +294,7 @@ The study varies one constant at a time, so two wrong constants together can sti
 
 ## 10. Reading the outputs
 
-`uv run pioscope --isa <pack> arch --write` regenerates both files in `docs/<pack>/`.
+`uv run piolab --isa <pack> arch --write` regenerates both files in `docs/<pack>/`.
 
 **arch-study.html**, panel by panel:
 1. **Architecture and allocation:** pick an architecture and a workload. Each block is one piece of hardware.
@@ -324,7 +324,7 @@ The **hand-picked architectures** (`architectures.yaml`) are fixed configuration
 
 | To change… | Edit | Then |
 |---|---|---|
-| protocol mixes or loads | `<pack>/arch/workloads.yaml` (`prog` = a program of the pack) | `uv run pioscope --isa <pack> arch --write` |
+| protocol mixes or loads | `<pack>/arch/workloads.yaml` (`prog` = a program of the pack) | `uv run piolab --isa <pack> arch --write` |
 | hand-picked architectures | `<pack>/arch/architectures.yaml` (`family: pio` or `mesh`; `imem: flops` or `sram`) | same |
 | area constants, unit prices or the SRAM catalogue | `<pack>/arch/cost.yaml` | same |
 | a program's demand | the program itself (demand is derived from the assembled image), or the pack's `demand` hooks | same |
