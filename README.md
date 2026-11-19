@@ -54,7 +54,7 @@ PIOLab is a library: your ISA lives in **your own repository** and PIOLab finds 
 
 ```bash
 uv init myproject && cd myproject
-uv add "piolab @ git+https://github.com/Sheffield-Chip-Design-Team/Pioscope@main"   # until it is on PyPI; pin a tag once there are releases
+uv add "piolab @ git+https://github.com/Sheffield-Chip-Design-Team/piolab@main"   # until it is on PyPI; pin a tag once there are releases
 uv run piolab new-pack myisa       # writes ./myisa/: a ready-to-install pack project
 cd myisa && uv sync && uv run pytest
 uv run piolab isa-docs && uv run piolab arch --write && uv run piolab sim blink

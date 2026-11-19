@@ -19,7 +19,7 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-REPO = "https://github.com/Sheffield-Chip-Design-Team/Pioscope"
+REPO = "https://github.com/Sheffield-Chip-Design-Team/piolab"
 PACKS = Path(__file__).resolve().parent.parent / "packs" / "pio"
 
 PYPROJECT = '''[project]
