@@ -44,6 +44,7 @@ Scenarios that need an engine (`requires_engine`, the default) run on the engine
 - the board;
 - device↔device loopbacks for UART, SPI and I²C, including stretching, NACK and arbitration;
 - CAN node↔node loopbacks: arbitration, ACK, injected stuff/CRC/form/bit errors, error-passive and bus-off, clock tolerance (`piolab/tests/devices/test_can.py`);
+- a CAN controller behind a `CanTransceiver` (TXD/RXD pins, loop delay, dominant time-out): how a DUT that is a CAN controller is wired to the bus;
 - decoders and checks;
 - backend parity.
 
