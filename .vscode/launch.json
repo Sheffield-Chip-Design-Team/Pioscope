@@ -1,53 +1,50 @@
 {
-  // Engine debugger (pioscope/vscode, docs/debugging.md).
+  // Engine debugger (piolab/vscode, docs/debugging.md).
   // Step Over = one instruction, Step Into = one sysclk cycle, Step Out = finish it.
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "pioscope",
+      "type": "piolab",
       "request": "launch",
       "name": "Debug current program",
       "program": "${file}",
-      "devices": ["uart_partner"],
-      "baud": 115200,
+      "devices": ["uart:baud=115200,send=0x55,0xA3"],
       "hostTx": ["0x55", "0xA3"],
-      "uartSend": ["0x55", "0xA3"],
       "vcd": "${workspaceFolder}/build/debug.vcd",
       "stopOnEntry": true
     },
     {
-      "type": "pioscope",
+      "type": "piolab",
       "request": "launch",
       "name": "PIO: UART RX scenario",
-      "scenario": "pioscope.packs.pio.tests.scenarios:uart_rx",
+      "scenario": "uart_rx",
       "vcd": "${workspaceFolder}/build/debug_rx.vcd",
       "stopOnEntry": true
     },
     {
-      "type": "pioscope",
+      "type": "piolab",
       "request": "launch",
       "name": "PIO: UART TX",
-      "program": "${workspaceFolder}/sim/packs/pio/programs/uart_tx.pio",
-      "devices": ["uart_partner"],
+      "program": "${workspaceFolder}/piolab/packs/pio/programs/uart_tx.pio",
+      "devices": ["uart:baud=115200"],
       "hostTx": ["0x55", "0xA3"],
-      "baud": 115200,
       "vcd": "${workspaceFolder}/build/debug.vcd",
       "stopOnEntry": true
     },
     {
-      "type": "pioscope",
+      "type": "piolab",
       "request": "launch",
       "name": "PIO: SPI mode 0 scenario",
-      "scenario": "pioscope.packs.pio.tests.scenarios:spi_master",
+      "scenario": "spi_master",
       "vcd": "${workspaceFolder}/build/debug_spi.vcd",
       "stopOnEntry": true
     },
     {
-      "type": "pioscope",
+      "type": "piolab",
       "request": "launch",
       "name": "Blink with an edge-counting unit (tutorial 04)",
-      "scenario": "pioscope.examples.pulse_counter:blink_scenario",
-      "dut": "pioscope.examples.edge_counter:EdgeCountingEngine",
+      "scenario": "piolab.examples.pulse_counter:blink_scenario",
+      "dut": "piolab.examples.edge_counter:EdgeCountingEngine",
       "vcd": "${workspaceFolder}/build/debug.vcd",
       "stopOnEntry": true
     }

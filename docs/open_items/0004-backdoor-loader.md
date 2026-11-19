@@ -3,10 +3,10 @@
 Status: accepted (2026-11-10)
 
 ## Decision
-- `pioscope.bench.loader.Loader` has two implementations:
+- `piolab.bench.loader.Loader` has two implementations:
   - `PyImageLoader` hands the `ProgramImage` object to Python DUTs.
   - `MemFileLoader` writes `prog.hex` (one word per imem slot, for `$readmemh`) and `cfg.json`, and passes `+PROG=` and `+CFG=` plusargs to the simulator.
-- `pioscope/bench/rtl/tb.v` reads `+PROG` into `` `PIOSCOPE_IMEM_PATH `` when that macro is defined, which will happen once the engine RTL exposes its instruction memory.
+- `piolab/bench/rtl/tb.v` reads `+PROG` into `` `PIOLAB_IMEM_PATH `` when that macro is defined, which will happen once the engine RTL exposes its instruction memory.
 - `cfg` stays JSON until the engine has a configuration register map.
 - A frontdoor loader over TT pins can be added later without touching scenarios.
 

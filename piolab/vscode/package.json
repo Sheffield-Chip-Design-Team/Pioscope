@@ -1,0 +1,101 @@
+{
+  "name": "piolab-asm",
+  "displayName": "PIOLab assembly",
+  "description": "Syntax highlighting for the ISA packs' assembly and a step debugger for their engine models",
+  "version": "0.1.0",
+  "publisher": "James Ashie Kotey, SHaRC",
+  "license": "Apache-2.0",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Debuggers", "Programming Languages"],
+  "main": "./extension.js",
+  "activationEvents": ["onDebugResolve:piolab", "onDebugInitialConfigurations", "onLanguage:piolab-asm"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "piolab-asm",
+        "aliases": ["PIOLab assembly", "piolab-asm"],
+        "extensions": [],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      { "language": "piolab-asm", "scopeName": "source.piolab-asm", "path": "./piolab.tmLanguage.json" }
+    ],
+    "breakpoints": [{ "language": "piolab-asm" }],
+    "configuration": {
+      "title": "PIOLab",
+      "properties": {
+        "piolab.adapterCommand": {
+          "type": "string",
+          "default": "uv",
+          "description": "Command that starts the debug adapter (give an absolute path if uv is not on the PATH VS Code sees, e.g. ~/.local/bin/uv)."
+        },
+        "piolab.adapterArgs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["run", "piolab", "dap"],
+          "description": "Arguments for piolab.adapterCommand."
+        }
+      }
+    },
+    "debuggers": [
+      {
+        "type": "piolab",
+        "label": "PIOLab engine model",
+        "languages": ["piolab-asm"],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "program": { "type": "string", "description": "Program source (any ISA pack's suffix) or image JSON to run on its engine model.", "default": "${file}" },
+              "scenario": { "type": "string", "description": "Instead of program: a scenario name in the ISA pack's scenarios module (e.g. uart_rx), or module:function." },
+              "devices": { "type": "array", "items": { "type": "string" }, "description": "Bus partners attached to the program's pins, as piolab --device specs: uart[:baud=N,send=0x55,0x41,ppm=N,bits=N,parity=none|even|odd,stop=N], spi[:mode=N], i2c[:addr=N,stretch=N]. Defaults: [tool.piolab.devices].", "default": ["uart"] },
+              "hostTx": { "type": ["array", "string"], "description": "Words the host pushes into the TX FIFO, e.g. [\"0x41\", \"0x42\"]." },
+              "model": { "type": "string", "description": "The ISA pack's engine model to run (piolab models; default: [tool.piolab] model, else the pack's default)." },
+              "cycles": { "type": "number", "description": "Maximum sysclk cycles to run (default: [tool.piolab] cycles, else 100000)." },
+              "stopOnEntry": { "type": "boolean", "description": "Stop before the first instruction.", "default": true },
+              "dut": { "type": "string", "description": "Instead of model: engine (default), stub, tt_template or package.module:callable, e.g. an Engine subclass with more cores. Threads, scopes and VCD groups follow the model.", "default": "engine" },
+              "vcd": { "type": "string", "description": "VCD file rewritten with the waveform so far (bench nets + engine probes) at every stop; open it in GTKWave or Surfer and reload.", "default": "${workspaceFolder}/build/debug.vcd" },
+              "trace": { "type": "boolean", "description": "Print every engine and bench event in the Debug Console while running.", "default": false },
+              "cwd": { "type": "string", "description": "The PIOLab project directory (holding pyproject.toml). Default: found from the program's path." }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "piolab",
+            "request": "launch",
+            "name": "Debug current program",
+            "program": "${file}",
+            "devices": ["uart:send=0x55,0xA3"],
+            "hostTx": ["0x55", "0xA3"],
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "PIOLab: debug a program",
+            "body": {
+              "type": "piolab",
+              "request": "launch",
+              "name": "Debug ${1:program}",
+              "program": "^\"\\${file}\"",
+              "devices": ["uart"],
+              "hostTx": ["0x55"],
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "PIOLab: debug a bench scenario",
+            "body": {
+              "type": "piolab",
+              "request": "launch",
+              "name": "Debug ${1:scenario}",
+              "scenario": "${2:uart_rx}",
+              "stopOnEntry": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

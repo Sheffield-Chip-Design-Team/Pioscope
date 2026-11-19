@@ -1,4 +1,4 @@
-# PIOScope: ISA packs, assembler, engine models, bench and debugger for programmable IO
+# PIOLab: ISA packs, assembler, engine models, bench and debugger for programmable IO
 
 This repository is a pre-RTL toolkit for PIO-style programmable IO engines. Its purpose is to **design and validate an instruction set** for serial protocols with a Python assembler and cycle-accurate simulator, before any RTL is written.
 
@@ -12,7 +12,7 @@ A PIO-style engine has small cores (state machines, on the RP2040) that run shor
 - private resources per core (PIO), or
 - pools allocated by software (a mesh).
 
-An instruction set is an **ISA pack** (ADR-0012). The example pack is the **RP2040 PIO** (`pioscope/packs/pio/isa.yaml`, `pioscope/packs/pio`, `pioscope/dut/pio`):
+An instruction set is an **ISA pack** (ADR-0012). The built-in **demonstration pack** is the **RP2040 PIO** (`piolab/packs/pio/`: `isa.yaml`, hooks, `models/base/`, programs, tests), laid out the way a project's own pack is:
 - the exact 16-bit encoding;
 - a state-machine model;
 - UART, SPI, I²C and WS2812 programs.
@@ -26,7 +26,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 **In scope:**
 1. ISA specifications, each in a single machine-readable source (`<pack>/isa.yaml`).
 2. An assembler: source → instruction words + a config image + a listing.
-3. Cycle-accurate, deterministic engine models (one or more cores) with pins, FIFOs and units, on a shared core (`pioscope/dut/core`).
+3. Cycle-accurate, deterministic engine models (one or more cores) with pins, FIFOs and units, on a shared core (`piolab/dut/core`).
 4. Device models (the other end of each bus) and independent waveform decoders.
 5. Protocol programs and a test suite that validates them.
 6. Per-protocol metrics, and an analytic architecture study (area, utilisation).
@@ -41,7 +41,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 
 ## 3. Machine model (the generic core)
 
-**Per core** (`pioscope.dut.core.Core`):
+**Per core** (`piolab.dut.core.Core`):
 - a PC and instruction memory (32 words like PIO; a parameter of the ISA);
 - scratch registers X and Y (32-bit);
 - shift registers OSR and ISR, 32-bit, with shift counters;
@@ -52,7 +52,7 @@ New packs are added the same way (docs/reference/isa-flow.md §5).
 A model adds what its ISA needs: autopull/autopush and shift directions (PIO), units, timed operations.
 
 **Units:**
-- hardware attached to a core, or shared between cores (`pioscope.dut.core.Unit`);
+- hardware attached to a core, or shared between cores (`piolab.dut.core.Unit`);
 - the PIO model's GPIO outputs and IRQ flags are shared units.
 
 The tools (trace, VCD, debugger) show any unit a model reports, through the observability contract (ADR-0010).
@@ -75,8 +75,8 @@ The tools (trace, VCD, debugger) show any unit a model reports, through the obse
 | I²C | master write; ACK/NACK; clock stretching |
 
 **Test structure:**
-1. **Device models** in `pioscope/devices/` play the other end of the bus: a UART partner (configurable baud error and glitches), an SPI slave (all modes), an I²C slave (address match, stretching, NACK), and a second I²C master.
-2. **Independent reference decoders** in `pioscope/decoders/` decode the pin waveform. They must not share code with the engine models.
+1. **Device models** in `piolab/devices/` play the other end of the bus: a UART partner (configurable baud error and glitches), an SPI slave (all modes), an I²C slave (address match, stretching, NACK), and a second I²C master.
+2. **Independent reference decoders** in `piolab/decoders/` decode the pin waveform. They must not share code with the engine models.
 3. **Property-based tests** (Hypothesis): random payloads round-trip, encodings round-trip.
 4. **Fault injection:** baud error, glitches, NACK, stretching.
 5. **Timing checks** against each protocol's spec (bit period, setup/hold, sample point).
@@ -93,46 +93,49 @@ The tools (trace, VCD, debugger) show any unit a model reports, through the obse
 CLAUDE.md
 docs/
   README.md                # documentation map: start here
-  tutorials/               # hands-on: first program, device+decoder, probe, unit, ISA change
+  tutorials/               # hands-on: first program, device+decoder, probe, unit, own pack + models, ISA change
   requirements/units/      # unit requirement sheet template
-  debugging.md             # guide: trace events, VCD + GTKWave, pioscope debug, VS Code
+  debugging.md             # guide: trace events, VCD + GTKWave, piolab debug, VS Code
   reference/               # simulator.md, isa-flow.md, debugger.md: how the code works
   bench.md                 # how the verification bench works
   arch-guide.md            # guide to the architecture study
   open_items/              # ADRs: one file per decision
   pio/                     # the PIO pack: machine-model.md + generated isa.md, isa-encoding.*, arch-study.*
-pioscope/                  # the Python package (installable; everything below ships in the wheel)
-  isa/                     # loads a pack's yaml; check.py: `pioscope isa-check`
+piolab/                    # the Python package (installable; everything below ships in the wheel)
+  isa/                     # loads a pack's yaml; check.py: `piolab isa-check`
   asm/                     # lexer, operands, directives, encoder (hook), expressions, listing, errors
   image.py                 # ProgramImage (IR + words + config + pack) <-> JSON / hex
   wave.py                  # Waveform (the only module decoders may import)
   bench/                   # board, nets, pads, wiring, scenarios, loaders; backends/ python + cocotb_rtl
     rtl/                   # the RTL harness tb.v and the Tiny Tapeout template stand-in (package data)
-  dut/                     # DUT contract + stand-ins; core/ (the generic engine); pio/ (the PIO model)
-  debug/                   # pioscope debug (GDB-style REPL) and pioscope dap (VS Code)
-  devices/                 # bus partner models
+  dut/                     # DUT contract + stand-ins (dut_factory: engine | model name | mod:fn); core/ (the generic engine)
+  debug/                   # piolab debug (GDB-style REPL) and piolab dap (VS Code)
+  devices/                 # bus partner models; spec.py: `--device uart:baud=N,send=..` specs
   decoders/                # independent waveform decoders
   checks/                  # scoreboard + spec timing checks
-  packs/                   # pack discovery (built-ins + the `pioscope.packs` entry points)
-    pio/                   # the PIO pack: isa.yaml, arch/ (workloads, architectures, costs),
-                           #   programs/, hooks (directives, encode, demand), tests/
+  packs/                   # pack discovery (built-ins + the `piolab.packs` entry points), discover_models
+    pio/                   # the PIO demo pack: isa.yaml, models/base/ (the state-machine model),
+                           #   arch/ (workloads, architectures, costs), programs/,
+                           #   hooks (directives, encode, demand), tests/
   examples/                # toy examples used by the tutorials
   arch/                    # architecture study: demand, allocators, area model, report, viz page
   scripts/                 # metrics, ISA doc generators, new_pack (the `new-pack` scaffold)
-  vscode/                  # VS Code extension; `pioscope vscode` builds it for the installed packs
-  testing.py               # pytest plugin (`pytest11`): bench, golden, --backend, --dut, ...
-  cli.py                   # the `pioscope` command
+  vscode/                  # VS Code extension; `piolab vscode` builds it for the installed packs
+  testing.py               # pytest plugin (`pytest11`): bench, golden, --backend, --model, --dut, ...
+  config.py                # `[tool.piolab]` project defaults (pack, model, cycles, out, docs, devices)
+  run.py                   # RunOptions: program/scenario/devices/model, shared by sim, debug, dap
+  cli.py                   # the `piolab` command
   tests/                   # framework tests
 ```
 
-Other packs live in their own packages and register through the `pioscope.packs` entry point (`pioscope new-pack NAME`). Generated documents go to `docs/<pack>` under the working directory. The Tiny Tapeout project template is the separate `pioscope-tt-template` repo.
+Other packs live in their own packages and register through the `piolab.packs` entry point (`piolab new-pack NAME`). A pack's models are the sub-packages of `<pkg>/models/` (`discover_models`), each exporting `Engine` and `HANDLERS`. A project sets its defaults in `[tool.piolab]` (docs/reference/isa-flow.md §5, ADR-0015). Generated documents go to `docs/<pack>` under the project directory. The Tiny Tapeout project template is the separate `pioscope-tt-template` repo.
 
 ### CLI
-- `pioscope asm prog.pio -o prog.json --listing prog.lst [--hex DIR]`: instruction words + config image + listing. The suffix picks the pack.
-- `pioscope sim prog.pio|prog.json --dut engine --device uart_partner --baud 115200 --vcd out.vcd [--trace]`: run with a device model attached.
-- `pioscope debug prog.pio --device uart_partner --baud 115200`: GDB-style stepping. `pioscope dap` backs the VS Code extension (`docs/debugging.md`).
-- `pioscope isa-check [--all] [-v]`: checks the pack's yaml against its model's handlers, directive handlers, semantics text, programs, directed tests and generated docs (agreements #1 and #6); exit 1 on a gap. The pack tests run the same checks (`pioscope.isa.check`).
-- `pioscope rtl --scenario mod:factory` (cocotb), `pioscope metrics`, `pioscope isa-docs`, `pioscope arch [--write]`. `pioscope vscode` builds the VS Code extension; `pioscope new-pack NAME` scaffolds a new ISA pack project. `pioscope --help` lists all, and `pioscope --isa PACK …` picks the pack.
+- `piolab asm PROG [-o F] [--listing [F]] [--hex DIR]`: instruction words + config image + listing. `PROG` is a path (the suffix picks the pack) or a program name of the active pack (`uart_tx`); outputs default to `<out>/<name>.*`.
+- `piolab sim PROG|IMAGE.json [-m MODEL] [-d uart:baud=115200,send=0x55] [--vcd [F]] [--trace]`: run on the pack's engine model with devices attached (`--scenario NAME|mod:fn` instead of a program; `--dut stub|tt_template|mod:fn` for a stand-in).
+- `piolab debug PROG -d uart`: GDB-style stepping, same run options as `sim`. `piolab dap` backs the VS Code extension (`docs/debugging.md`).
+- `piolab isa-check [--all] [-v]`: checks the pack's yaml against its model's handlers, directive handlers, semantics text, programs, directed tests and generated docs (agreements #1 and #6); exit 1 on a gap. The pack tests run the same checks (`piolab.isa.check`).
+- `piolab rtl --scenario mod:factory` (cocotb), `piolab metrics`, `piolab isa-docs`, `piolab arch [--write]`. `piolab vscode` builds the VS Code extension; `piolab new-pack NAME` scaffolds a new ISA pack project. `piolab models` lists the packs' models. `piolab --help` lists all; `--isa PACK` (anywhere) picks the pack.
 
 ---
 

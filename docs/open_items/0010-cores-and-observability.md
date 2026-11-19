@@ -22,11 +22,11 @@ Each new core or unit would have meant editing the debugger, the bench and the V
    | `probes()` / `probe_bits()` | `{"sm0.pc": 3, "sm0.units.<unit>.<probe>": 17, "shared.arb.grant": 1}` | VCD scopes `engine.sm0`, `engine.sm0.units.<unit>`, `engine.shared.arb`; GTKWave save-file groups |
    | `drain_events()` | `[(source, Txn)]`, source = core name or `shared` | trace, `catch event`, `Result.logs[source]` |
 
-   - Units subclass `pioscope.dut.core.Unit` (`name`, `state()`, `probes()`, `probe_bits()`, `on_cycle()`).
+   - Units subclass `piolab.dut.core.Unit` (`name`, `state()`, `probes()`, `probe_bits()`, `on_cycle()`).
    - A core iterates over its `units` list, and the engine over its `cores` and `shared` lists. Adding a unit, a core or a shared unit needs no change to the tools.
    - Bare events from older DUTs are logged under the source `engine`.
-   - The generic core (`pioscope.dut.core`, ADR-0012) implements all of this, so a model built on it gets the contract for free.
-2. **The debugger takes the model as a parameter:** `pioscope debug --dut module:callable`, or `"dut"` in `launch.json`.
+   - The generic core (`piolab.dut.core`, ADR-0012) implements all of this, so a model built on it gets the contract for free.
+2. **The debugger takes the model as a parameter:** `piolab debug --dut module:callable`, or `"dut"` in `launch.json`.
    - Threads are cores. Scopes come from the core's state.
    - Breakpoints apply to every core running that code, or to one, with a `<name>:` prefix.
    - `step`/`finish` act on the selected core; the others run in the same cycles.
@@ -34,5 +34,5 @@ Each new core or unit would have meant editing the debugger, the bench and the V
 3. **Waveform layout follows the model.** Probe names are nested scopes in the VCD, and `Waveform.to_gtkw()` writes a GTKWave save file grouped per core, unit and shared unit. The debugger writes both at every stop when `vcd` is set.
 
 ## Consequences
-- `pioscope/packs/pio/tests/test_debug.py` keeps the promise. A two-SM model with an extra unit, defined only in the test, is traced, recorded, and debugged in the REPL and over DAP. The PIO model's shared `gpio` and `irq` units appear without tool changes.
+- `piolab/packs/pio/tests/test_debug.py` keeps the promise. A two-SM model with an extra unit, defined only in the test, is traced, recorded, and debugged in the REPL and over DAP. The PIO model's shared `gpio` and `irq` units appear without tool changes.
 - New models subclass the core `Engine` and override `build()`, or provide the contract directly.

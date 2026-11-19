@@ -1,22 +1,22 @@
-# Debugger reference: how `pioscope debug` and the VS Code adapter work
+# Debugger reference: how `piolab debug` and the VS Code adapter work
 
 **Audience:** engineers who want to change the debugger itself: add a command, show something new, or support a new kind of model. To *use* the debugger, read [debugging.md](../debugging.md). Usually you won't need this page: a model that follows the observability contract ([simulator.md](simulator.md) §7) is shown without any debugger change.
 
 ```
-                ┌───────────── pioscope/debug/session.py: DebugSession ─────────────┐
- pioscope debug ──┤ owns a PySession (the same cycle loop as pioscope sim) + a DUT  │
+                ┌───────────── piolab/debug/session.py: DebugSession ─────────────┐
+ piolab debug ──┤ owns a PySession (the same cycle loop as piolab sim) + a DUT  │
   repl.py       │ breakpoints, watches, catches, selected core, eval, step  │
                 │ write_vcd/to_gtkw at every stop                                │
- pioscope dap ────┤                                                              │
+ piolab dap ────┤                                                              │
   dap.py        └──────────────────────────────────────────────────────────────┘
-  (VS Code: pioscope/vscode/extension.js starts `uv run pioscope dap`)
+  (VS Code: piolab/vscode/extension.js starts `uv run piolab dap`)
 ```
 
 ## 1. `DebugSession` (session.py)
 
 | Part | What it does |
 |---|---|
-| `__init__(factory, dut="engine")` | `factory()` builds the `Scenario`; `dut` is a factory or a `--dut` name (`engine`: the program's ISA pack's model). `restart()` makes a fresh `PySession(scenario, dut)`. |
+| `__init__(factory, dut="engine", model=None)` | `factory()` builds the `Scenario`; `dut` is a factory or a `--dut` name (`engine`: the program's ISA pack's model `model`, default the project's or pack's). `restart()` makes a fresh `PySession(scenario, dut)`. |
 | `cores`, `names`, `selected`, `select()` | the model's cores; `step`/`finish`/`print` act on the selected one |
 | `resolve(where, ti)` | label, `*addr`, `line`, `file:line`, optionally `<core>:` → an address in a core's program |
 | `Breakpoint.addrs` | {core index: address}; a breakpoint can apply to several cores |
@@ -38,7 +38,7 @@ The session never reads a register by name except through `state()` and `set_reg
 1. Add a method `do_mycmd(self, arg: str) -> None` with a one-paragraph docstring.
 2. Use `self.s` (the session) and `self.out(text)` to print.
 3. If it runs the simulation, call `self.report(stop)` afterwards.
-4. Add a case to `pioscope/packs/pio/tests/test_debug.py` using the `kdb(...)` helper, which runs commands and returns the output.
+4. Add a case to `piolab/packs/pio/tests/test_debug.py` using the `kdb(...)` helper, which runs commands and returns the output.
 5. Add a row to the command table in [debugging.md](../debugging.md).
 
 The Debug Console in VS Code runs the same `Repl` for any line starting with a known command name. Running and stepping commands are refused there (use the toolbar).
@@ -49,7 +49,7 @@ The Debug Console in VS Code runs the same `Repl` for any line starting with a k
 
 | DAP request | Implementation |
 |---|---|
-| `launch` | `factory_from_launch(args)` (the same scenario building as `pioscope sim`) and `dut_from_launch(args)`; optional `vcd` |
+| `launch` | `factory_from_launch(args)` (the same scenario building as `piolab sim`) and `dut_from_launch(args)`; optional `vcd` |
 | `threads` | one per core, id = index + 1 |
 | `stackTrace` | one frame per thread, frame id = thread id; `instructionPointerReference` = `0xTAAA` |
 | `scopes` | "Core <name>" (the scalars of its state), one scope per dict-valued key (titles from `TITLES`, else title-cased), "Shared" if any, "Timing" |
@@ -62,17 +62,17 @@ The Debug Console in VS Code runs the same `Repl` for any line starting with a k
 
 **Add a launch attribute:**
 1. Read it in `factory_from_launch`, `dut_from_launch` or `req_launch`.
-2. Declare it in `pioscope/vscode/package.json` under `configurationAttributes.launch.properties`. `test_launch_attributes_match_the_adapter` checks that the two agree.
-3. Rebuild the extension: `uv run pioscope vscode`, then `code --install-extension build/pioscope-asm-0.1.0.vsix`, then reload the window.
+2. Declare it in `piolab/vscode/package.json` under `configurationAttributes.launch.properties`. `test_launch_attributes_match_the_adapter` checks that the two agree.
+3. Rebuild the extension: `uv run piolab vscode`, then `code --install-extension build/piolab-asm-0.1.0.vsix`, then reload the window.
 
-**Debugging the adapter.** The `Dap` class in `pioscope/packs/pio/tests/test_debug.py` is a small DAP client; copy a test and print the messages. An adapter exception is sent to the Debug Console as stderr, and the request fails with its message.
+**Debugging the adapter.** The `Dap` class in `piolab/packs/pio/tests/test_debug.py` is a small DAP client; copy a test and print the messages. An adapter exception is sent to the Debug Console as stderr, and the request fails with its message.
 
-## 4. The extension (pioscope/vscode)
+## 4. The extension (piolab/vscode)
 
 | File | Contents |
 |---|---|
-| `package.json` | the language, grammar, debugger type `pioscope`, launch attributes, `pioscope.adapterCommand` setting |
-| `extension.js` | default configuration for F5 without `launch.json`; finds the project directory; starts `uv run pioscope dap` |
-| `build.py` | `pioscope vscode`: generates the grammar from every *installed* ISA pack's yaml (mnemonics, directives, conditions, keywords), sets the language's file suffixes, and packs the `.vsix` |
+| `package.json` | the language, grammar, debugger type `piolab`, launch attributes, `piolab.adapterCommand` setting |
+| `extension.js` | default configuration for F5 without `launch.json`; finds the project directory; starts `uv run piolab dap` |
+| `build.py` | `piolab vscode`: generates the grammar from every *installed* ISA pack's yaml (mnemonics, directives, conditions, keywords), sets the language's file suffixes, and packs the `.vsix` |
 
-The grammar is generated at build time, so run `pioscope vscode` in your project's environment and every pack installed there, yours included, is highlighted. Rebuild after adding instructions.
+The grammar is generated at build time, so run `piolab vscode` in your project's environment and every pack installed there, yours included, is highlighted. Rebuild after adding instructions.
